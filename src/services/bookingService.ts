@@ -1,3 +1,4 @@
+
 import { getAuthToken } from './authService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -85,6 +86,14 @@ export const getAllBookings = async (params?: {
 
 export const createBooking = async (bookingData: CreateBookingData): Promise<ApiResponse<Booking>> => {
   console.log('Creating booking with data:', bookingData);
+  console.log('Data types:', {
+    roomId: typeof bookingData.roomId,
+    title: typeof bookingData.title,
+    startTime: typeof bookingData.startTime,
+    endTime: typeof bookingData.endTime,
+    recurring: typeof bookingData.recurring,
+    description: typeof bookingData.description
+  });
   
   try {
     const response = await fetch(`${API_BASE_URL}/bookings`, {
@@ -97,6 +106,10 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
     
     const responseData = await response.json();
     console.log('Response data:', responseData);
+    
+    if (responseData.errors) {
+      console.log('Validation errors:', responseData.errors);
+    }
 
     if (!response.ok) {
       throw new Error(responseData.message || 'Failed to create booking');

@@ -79,11 +79,21 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       return;
     }
 
-    console.log('Form validation passed, submitting:', formData);
+    // Prepare data for submission with proper types
+    const submitData = {
+      roomId: parseInt(formData.roomId.toString()),
+      title: formData.title.trim(),
+      startTime: moment(formData.startTime).toISOString(),
+      endTime: moment(formData.endTime).toISOString(),
+      description: formData.description?.trim() || null,
+      recurring: formData.recurring || false
+    };
+
+    console.log('Form validation passed, submitting:', submitData);
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      await onSubmit(submitData);
     } finally {
       setIsSubmitting(false);
     }
@@ -111,7 +121,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         <Label htmlFor="room">Room *</Label>
         <Select 
           value={formData.roomId.toString()} 
-          onValueChange={(value) => handleInputChange('roomId', parseInt(value) || value)}
+          onValueChange={(value) => handleInputChange('roomId', value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a room" />
