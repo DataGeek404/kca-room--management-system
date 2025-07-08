@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,13 +47,38 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Admin form data before submission:', formData);
+
+    // Admin validation - ensure required fields are filled
     if (!formData.roomId || !formData.title || !formData.startTime || !formData.endTime) {
+      console.log('Admin form validation failed - missing required fields');
+      alert('Please fill in all required fields');
       return;
     }
 
+    // Validate that end time is after start time
+    if (moment(formData.endTime).isSameOrBefore(moment(formData.startTime))) {
+      alert('End time must be after start time');
+      return;
+    }
+
+    // Prepare data for submission with proper types
+    const submitData = {
+      roomId: parseInt(formData.roomId.toString()),
+      title: formData.title.trim(),
+      startTime: moment(formData.startTime).toISOString(),
+      endTime: moment(formData.endTime).toISOString(),
+      description: formData.description?.trim() || null,
+      recurring: formData.recurring || false
+    };
+
+    console.log('Admin form validation passed, submitting:', submitData);
+
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      await onSubmit(submitData);
+    } catch (error) {
+      console.error('Admin booking submission error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -72,7 +97,7 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({
         <Label htmlFor="room">Room *</Label>
         <Select 
           value={formData.roomId.toString()} 
-          onValueChange={(value) => handleInputChange('roomId', parseInt(value))}
+          onValueChange={(value) => handleInputChange('roomId', value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a room" />
@@ -80,7 +105,7 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({
           <SelectContent>
             {rooms.map((room) => (
               <SelectItem key={room.id} value={room.id.toString()}>
-                {room.name} - {room.building} Floor {room.floor}
+                {room.name} - {room.building} Floor {room.floor} (Capacity: {room.capacity})
               </SelectItem>
             ))}
           </SelectContent>

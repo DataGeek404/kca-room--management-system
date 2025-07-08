@@ -30,8 +30,10 @@ const authenticateToken = async (req, res, next) => {
     }
 
     req.user = users[0];
+    console.log('Authenticated user:', { id: req.user.id, role: req.user.role, name: req.user.name });
     next();
   } catch (error) {
+    console.error('Authentication error:', error);
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token'
@@ -48,13 +50,16 @@ const authorize = (...roles) => {
       });
     }
 
+    console.log('Checking authorization:', { userRole: req.user.role, requiredRoles: roles });
+
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Insufficient permissions'
+        message: `Insufficient permissions. Required: ${roles.join(' or ')}, Current: ${req.user.role}`
       });
     }
 
+    console.log('Authorization successful for user:', req.user.name);
     next();
   };
 };

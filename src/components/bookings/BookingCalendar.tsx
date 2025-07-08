@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'react-big-calendar';
 import { momentLocalizer } from 'react-big-calendar';
@@ -12,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { AdminBookingForm } from "@/components/bookings/AdminBookingForm";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const localizer = momentLocalizer(moment);
 
@@ -31,6 +31,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<{start: Date, end: Date} | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadData();
@@ -86,12 +87,6 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
   };
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    // Default to 3-hour duration if user just clicks without selecting a range
-    const duration = moment(end).diff(moment(start), 'hours');
-    if (duration < 1) {
-      end = moment(start).add(3, 'hours').toDate();
-    }
-    
     setSelectedSlot({ start, end });
     setIsCreateDialogOpen(true);
   };
@@ -106,6 +101,8 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
 
   const handleCreateBooking = async (formData: any) => {
     try {
+      console.log('Creating booking with form data:', formData);
+      
       const bookingData = {
         roomId: formData.roomId,
         title: formData.title,
@@ -127,6 +124,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
         loadData();
       }
     } catch (error) {
+      console.error('Create booking error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create booking",
@@ -139,6 +137,8 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
     if (!editingBooking) return;
     
     try {
+      console.log('Updating booking with form data:', formData);
+      
       const bookingData = {
         roomId: formData.roomId,
         title: formData.title,
@@ -160,6 +160,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
         loadData();
       }
     } catch (error) {
+      console.error('Update booking error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update booking",
@@ -229,13 +230,15 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
   };
 
   const canEditBooking = (booking: Booking) => {
-    return viewType === "admin" || (viewType === "user" && booking.user_id === getCurrentUserId());
-  };
-
-  const getCurrentUserId = () => {
-    // This would normally come from your auth context
-    // For now, returning a placeholder - you should integrate with your auth system
-    return 1;
+    if (!user) return false;
+    
+    // Admin can edit all bookings
+    if (viewType === "admin" && user.role === 'admin') {
+      return true;
+    }
+    
+    // Users can only edit their own bookings
+    return viewType === "user" && booking.user_id === user.id;
   };
 
   const isBookingEditable = (booking: Booking) => {
