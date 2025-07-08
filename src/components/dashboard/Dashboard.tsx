@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { LecturerDashboard } from "@/components/dashboard/LecturerDashboard";
 import { MaintenanceDashboard } from "@/components/dashboard/MaintenanceDashboard";
+import { UserSettings } from "@/components/settings/UserSettings";
 
 interface DashboardProps {
   user: User;
@@ -14,9 +15,27 @@ interface DashboardProps {
 
 export const Dashboard = ({ user, onLogout }: DashboardProps) => {
   const [activeView, setActiveView] = useState("dashboard");
+  const [currentUser, setCurrentUser] = useState(user);
+
+  const handleUserUpdate = (updatedUser: User) => {
+    setCurrentUser(updatedUser);
+  };
+
+  const handleSettingsClick = () => {
+    setActiveView("settings");
+  };
 
   const renderContent = () => {
-    switch (user.role) {
+    if (activeView === "settings") {
+      return (
+        <UserSettings 
+          user={currentUser} 
+          onUserUpdate={handleUserUpdate}
+        />
+      );
+    }
+
+    switch (currentUser.role) {
       case 'admin':
         return <AdminDashboard activeView={activeView} />;
       case 'lecturer':
@@ -29,15 +48,19 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar 
-        user={user} 
+        user={currentUser} 
         activeView={activeView} 
         setActiveView={setActiveView} 
       />
       
       <div className="flex-1 flex flex-col">
-        <Header user={user} onLogout={onLogout} />
+        <Header 
+          user={currentUser} 
+          onLogout={onLogout} 
+          onSettings={handleSettingsClick}
+        />
         
         <main className="flex-1 p-6">
           {renderContent()}
