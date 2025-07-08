@@ -197,7 +197,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
               </div>
               
               <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <Building2 className="h-4 w-4 text-green-600 mt-1 flex-shrink-0" />
+                <Building className="h-4 w-4 text-green-600 mt-1 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">
                     {stats.activeDepartments > 0 ? `${stats.activeDepartments} departments active` : 'No departments yet'}
