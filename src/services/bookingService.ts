@@ -1,3 +1,4 @@
+
 import { getAuthToken } from './authService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -15,7 +16,7 @@ export interface Booking {
   start_time: string;
   end_time: string;
   recurring: boolean;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
   created_at: string;
   updated_at: string;
 }

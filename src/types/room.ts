@@ -1,4 +1,3 @@
-
 export interface Room {
   id: string;
   name: string;
@@ -20,7 +19,7 @@ export interface Booking {
   endTime: string;
   date: string;
   recurring?: boolean;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
 }
 
 export interface MaintenanceRequest {
