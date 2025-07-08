@@ -42,7 +42,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
         storeAuthToken(response.data.token);
         
         onLogin({
-          id: response.data.user.id,
+          id: Number(response.data.user.id),
           name: response.data.user.name,
           email: response.data.user.email,
           role: response.data.user.role as 'admin' | 'lecturer' | 'maintenance'

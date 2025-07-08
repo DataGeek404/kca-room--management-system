@@ -77,7 +77,7 @@ export const RegisterForm = ({ onRegister }: RegisterFormProps) => {
         storeAuthToken(response.data.token);
         
         onRegister({
-          id: response.data.user.id.toString(),
+          id: Number(response.data.user.id),
           name: response.data.user.name,
           email: response.data.user.email,
           role: response.data.user.role as 'admin' | 'lecturer' | 'maintenance'

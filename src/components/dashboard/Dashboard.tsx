@@ -152,7 +152,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar 
           user={user} 
@@ -164,7 +164,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
         <SidebarInset className="flex-1">
           {/* Enhanced Header */}
           <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 bg-background/95 px-4 backdrop-blur-sm">
-            <SidebarTrigger className="-ml-1 lg:hidden" />
+            <SidebarTrigger className="-ml-1" />
             
             <div className="flex flex-1 items-center justify-between">
               <div className="flex items-center gap-4">
