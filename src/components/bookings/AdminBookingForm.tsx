@@ -47,7 +47,15 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Admin form data before submission:', formData);
+    console.log('Admin form data before validation:', formData);
+    console.log('Data types before conversion:', {
+      roomId: typeof formData.roomId,
+      title: typeof formData.title,
+      startTime: typeof formData.startTime,
+      endTime: typeof formData.endTime,
+      description: typeof formData.description,
+      recurring: typeof formData.recurring
+    });
 
     // Admin validation - ensure required fields are filled
     if (!formData.roomId || !formData.title || !formData.startTime || !formData.endTime) {
@@ -62,17 +70,32 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({
       return;
     }
 
-    // Prepare data for submission with proper types
+    // Ensure roomId is converted to integer
+    const roomId = parseInt(formData.roomId.toString(), 10);
+    if (isNaN(roomId)) {
+      alert('Please select a valid room');
+      return;
+    }
+
+    // Prepare data for submission with proper types and validation
     const submitData = {
-      roomId: parseInt(formData.roomId.toString()),
+      roomId: roomId,
       title: formData.title.trim(),
       startTime: moment(formData.startTime).toISOString(),
       endTime: moment(formData.endTime).toISOString(),
-      description: formData.description?.trim() || null,
-      recurring: formData.recurring || false
+      description: formData.description?.trim() || undefined,
+      recurring: Boolean(formData.recurring)
     };
 
     console.log('Admin form validation passed, submitting:', submitData);
+    console.log('Final data types:', {
+      roomId: typeof submitData.roomId,
+      title: typeof submitData.title,
+      startTime: typeof submitData.startTime,
+      endTime: typeof submitData.endTime,
+      description: typeof submitData.description,
+      recurring: typeof submitData.recurring
+    });
 
     setIsSubmitting(true);
     try {
@@ -120,6 +143,7 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({
           onChange={(e) => handleInputChange('title', e.target.value)}
           placeholder="Meeting title"
           required
+          minLength={3}
         />
       </div>
 

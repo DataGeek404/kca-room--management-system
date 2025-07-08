@@ -109,7 +109,7 @@ export const getAllBookings = async (params?: {
 
 export const createBooking = async (bookingData: CreateBookingData): Promise<ApiResponse<Booking>> => {
   console.log('Creating booking with data:', bookingData);
-  console.log('Data types:', {
+  console.log('Data types before submission:', {
     roomId: typeof bookingData.roomId,
     title: typeof bookingData.title,
     startTime: typeof bookingData.startTime,
@@ -118,6 +118,31 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
     description: typeof bookingData.description
   });
   
+  // Validate data types before sending
+  if (!Number.isInteger(bookingData.roomId) || bookingData.roomId <= 0) {
+    throw new Error('Invalid room ID: must be a positive integer');
+  }
+  
+  if (!bookingData.title || bookingData.title.trim().length < 3) {
+    throw new Error('Title must be at least 3 characters long');
+  }
+  
+  if (!bookingData.startTime || !bookingData.endTime) {
+    throw new Error('Start time and end time are required');
+  }
+
+  // Validate ISO 8601 datetime format
+  const startDate = new Date(bookingData.startTime);
+  const endDate = new Date(bookingData.endTime);
+  
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    throw new Error('Invalid datetime format');
+  }
+  
+  if (endDate <= startDate) {
+    throw new Error('End time must be after start time');
+  }
+  
   try {
     // Check if backend is running
     const isBackendRunning = await checkBackendHealth();
@@ -125,10 +150,22 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
       throw new Error('Backend server is not running. Please make sure the backend server is started.');
     }
 
+    // Prepare clean data for submission
+    const cleanedData = {
+      roomId: parseInt(bookingData.roomId.toString(), 10),
+      title: bookingData.title.trim(),
+      startTime: bookingData.startTime,
+      endTime: bookingData.endTime,
+      recurring: Boolean(bookingData.recurring || false),
+      ...(bookingData.description?.trim() && { description: bookingData.description.trim() })
+    };
+
+    console.log('Sending cleaned data to backend:', cleanedData);
+
     const response = await fetch(`${API_BASE_URL}/bookings`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify(cleanedData),
     });
 
     console.log('Response status:', response.status);
@@ -138,6 +175,15 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
     
     if (responseData.errors) {
       console.log('Validation errors:', responseData.errors);
+      // Log detailed validation errors
+      responseData.errors.forEach((error: any, index: number) => {
+        console.log(`Validation error ${index + 1}:`, {
+          field: error.path || error.param,
+          message: error.msg,
+          value: error.value,
+          location: error.location
+        });
+      });
     }
 
     if (!response.ok) {
@@ -146,7 +192,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
         throw new Error('Server error: Please check if the database is running and properly configured.');
       } else if (response.status === 400) {
         const errorMessage = responseData.errors 
-          ? `Validation failed: ${responseData.errors.map((e: any) => e.msg).join(', ')}`
+          ? `Validation failed: ${responseData.errors.map((e: any) => `${e.param || e.path}: ${e.msg}`).join(', ')}`
           : responseData.message || 'Bad request';
         throw new Error(errorMessage);
       } else {
