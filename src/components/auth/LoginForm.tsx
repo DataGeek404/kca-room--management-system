@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { User, LoginCredentials } from "@/types/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { loginUser, storeAuthToken } from "@/services/authService";
 
 interface LoginFormProps {
   onLogin: (user: User) => void;
@@ -35,21 +36,29 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     setIsLoading(true);
     
     try {
-      // TODO: Replace with real authentication API call
-      // const response = await authenticateUser(credentials);
+      const response = await loginUser(credentials);
       
-      // Temporary: This should be replaced with real authentication
-      console.log("Login attempt:", credentials.email);
-      toast({
-        title: "Authentication Error",
-        description: "Please set up Supabase authentication to enable login",
-        variant: "destructive"
-      });
-      
+      if (response.success && response.data) {
+        // Store the JWT token
+        storeAuthToken(response.data.token);
+        
+        // Call the onLogin callback with user data
+        onLogin({
+          id: response.data.user.id.toString(),
+          name: response.data.user.name,
+          email: response.data.user.email,
+          role: response.data.user.role as 'admin' | 'lecturer' | 'maintenance'
+        });
+
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        });
+      }
     } catch (error) {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password",
+        description: error instanceof Error ? error.message : "Invalid email or password",
         variant: "destructive"
       });
     } finally {

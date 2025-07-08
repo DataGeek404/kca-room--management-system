@@ -3,20 +3,22 @@ import { useState, useEffect } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { User } from "@/types/auth";
+import { getAuthToken, removeAuthToken } from "@/services/authService";
 
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Check for existing authentication session
-    // This should be replaced with real session checking
+    // Check for existing authentication session
     const checkAuthSession = async () => {
       try {
-        // const session = await getCurrentSession();
-        // if (session) {
-        //   setCurrentUser(session.user);
-        // }
+        const token = getAuthToken();
+        if (token) {
+          // TODO: Validate token with backend and get user data
+          // For now, we'll just check if token exists
+          console.log("Token found, but validation not implemented yet");
+        }
       } catch (error) {
         console.error("Session check failed:", error);
       } finally {
@@ -29,13 +31,11 @@ const Index = () => {
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
-    // TODO: Store session in secure storage
   };
 
   const handleLogout = async () => {
     try {
-      // TODO: Call logout API
-      // await logoutUser();
+      removeAuthToken();
       setCurrentUser(null);
     } catch (error) {
       console.error("Logout failed:", error);

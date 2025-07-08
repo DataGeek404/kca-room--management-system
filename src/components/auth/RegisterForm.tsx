@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User } from "@/types/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { registerUser, storeAuthToken } from "@/services/authService";
 
 interface RegisterCredentials {
   name: string;
@@ -65,18 +66,34 @@ export const RegisterForm = ({ onRegister }: RegisterFormProps) => {
     setIsLoading(true);
     
     try {
-      // TODO: Replace with real registration API call
-      console.log("Registration attempt:", credentials.email, credentials.role);
-      toast({
-        title: "Registration Error",
-        description: "Please set up Supabase authentication to enable registration",
-        variant: "destructive"
+      const response = await registerUser({
+        name: credentials.name,
+        email: credentials.email,
+        password: credentials.password,
+        role: credentials.role
       });
       
+      if (response.success && response.data) {
+        // Store the JWT token
+        storeAuthToken(response.data.token);
+        
+        // Call the onRegister callback with user data
+        onRegister({
+          id: response.data.user.id.toString(),
+          name: response.data.user.name,
+          email: response.data.user.email,
+          role: response.data.user.role as 'admin' | 'lecturer' | 'maintenance'
+        });
+
+        toast({
+          title: "Success",
+          description: "Account created successfully",
+        });
+      }
     } catch (error) {
       toast({
         title: "Registration Failed",
-        description: "An error occurred during registration",
+        description: error instanceof Error ? error.message : "An error occurred during registration",
         variant: "destructive"
       });
     } finally {
