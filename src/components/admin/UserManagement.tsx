@@ -1,60 +1,133 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Users, UserCheck, Wrench } from "lucide-react";
+import { UserCard, User } from "./UserCard";
+import { UserForm } from "./UserForm";
+import { getUsers, updateUserStatus, updateUserRole, deleteUser } from "@/services/userService";
 
 export const UserManagement = () => {
-  const users = [
-    {
-      id: "1",
-      name: "Dr. Sarah Admin",
-      email: "admin@kca.ac.ke",
-      role: "admin",
-      department: "Administration",
-      status: "active",
-      lastLogin: "2024-07-08T09:30:00Z"
-    },
-    {
-      id: "2", 
-      name: "Prof. John Lecturer",
-      email: "lecturer@kca.ac.ke",
-      role: "lecturer",
-      department: "Computer Science",
-      status: "active",
-      lastLogin: "2024-07-08T08:15:00Z"
-    },
-    {
-      id: "3",
-      name: "Mike Maintenance", 
-      email: "maintenance@kca.ac.ke",
-      role: "maintenance",
-      department: "Facilities",
-      status: "active",
-      lastLogin: "2024-07-08T07:45:00Z"
-    }
-  ];
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-purple-100 text-purple-800';
-      case 'lecturer':
-        return 'bg-blue-100 text-blue-800';
-      case 'maintenance':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await getUsers();
+      if (response.success && response.data) {
+        setUsers(response.data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load users",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleSubmit = async (formData: any) => {
+    try {
+      setIsSubmitting(true);
+      // Implementation would depend on backend API
+      toast({
+        title: "Success",
+        description: editingUser ? "User updated successfully" : "User created successfully"
+      });
+      
+      setIsAddDialogOpen(false);
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+      loadUsers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Operation failed",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (user: User) => {
+    if (!confirm(`Are you sure you want to delete user ${user.name}?`)) return;
+    
+    try {
+      await deleteUser(user.id);
+      toast({
+        title: "Success",
+        description: "User deleted successfully"
+      });
+      loadUsers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete user",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleStatusChange = async (user: User, newStatus: string) => {
+    try {
+      await updateUserStatus(user.id, newStatus);
+      toast({
+        title: "Success",
+        description: "User status updated successfully"
+      });
+      loadUsers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRoleChange = async (user: User, newRole: string) => {
+    try {
+      await updateUserRole(user.id, newRole);
+      toast({
+        title: "Success",
+        description: "User role updated successfully"
+      });
+      loadUsers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update role",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const userStats = {
+    lecturers: users.filter(u => u.role === 'lecturer').length,
+    admins: users.filter(u => u.role === 'admin').length,
+    maintenance: users.filter(u => u.role === 'maintenance').length,
   };
 
   return (
@@ -64,96 +137,100 @@ export const UserManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600">Manage system users and their permissions</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          Add New User
-        </Button>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add New User
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+            </DialogHeader>
+            <UserForm
+              onSubmit={handleSubmit}
+              onCancel={() => setIsAddDialogOpen(false)}
+              isLoading={isSubmitting}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {users.filter(u => u.role === 'lecturer').length}
-            </div>
+            <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+            <div className="text-2xl font-bold text-blue-600">{userStats.lecturers}</div>
             <div className="text-sm text-gray-600">Lecturers</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {users.filter(u => u.role === 'admin').length}
-            </div>
+            <UserCheck className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+            <div className="text-2xl font-bold text-purple-600">{userStats.admins}</div>
             <div className="text-sm text-gray-600">Administrators</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {users.filter(u => u.role === 'maintenance').length}
-            </div>
+            <Wrench className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+            <div className="text-2xl font-bold text-orange-600">{userStats.maintenance}</div>
             <div className="text-sm text-gray-600">Maintenance Staff</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {users.map((user) => (
-          <Card key={user.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                      <span className="text-gray-600 font-medium">
-                        {user.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                      <p className="text-sm text-gray-600">{user.email}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Role</p>
-                      <Badge className={getRoleColor(user.role)}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Department</p>
-                      <p className="font-medium">{user.department}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Status</p>
-                      <Badge className="bg-green-100 text-green-800">
-                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Last Login</p>
-                      <p className="font-medium">{formatDate(user.lastLogin)}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    View Activity
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    Deactivate
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex gap-4">
+        <Input
+          placeholder="Search users by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-md"
+        />
       </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredUsers.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onEdit={(user) => {
+                setEditingUser(user);
+                setIsEditDialogOpen(true);
+              }}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
+              onRoleChange={handleRoleChange}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          {editingUser && (
+            <UserForm
+              initialData={editingUser}
+              onSubmit={handleSubmit}
+              onCancel={() => {
+                setIsEditDialogOpen(false);
+                setEditingUser(null);
+              }}
+              isLoading={isSubmitting}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
