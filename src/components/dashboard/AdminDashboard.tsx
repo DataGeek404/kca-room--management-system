@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,14 +102,8 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
     }
   };
 
-  const handleBookingSubmit = async (formData: any) => {
-    try {
-      // Booking creation logic would go here
-      showSuccessToast("Booking created successfully");
-      setIsBookingDialogOpen(false);
-    } catch (error) {
-      showErrorToast("Failed to create booking");
-    }
+  const handleBookingClose = () => {
+    setIsBookingDialogOpen(false);
   };
 
   const handleGenerateReport = () => {
@@ -285,10 +278,7 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
                   <DialogHeader>
                     <DialogTitle>Create New Booking</DialogTitle>
                   </DialogHeader>
-                  <BookingForm
-                    onSubmit={handleBookingSubmit}
-                    onCancel={() => setIsBookingDialogOpen(false)}
-                  />
+                  <BookingForm onClose={handleBookingClose} />
                 </DialogContent>
               </Dialog>
 
