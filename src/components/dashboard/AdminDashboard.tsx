@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Calendar, Users, Wrench, TrendingUp, AlertTriangle, Activity, Database } from "lucide-react";
 import { getUsers } from "@/services/userService";
 import { getDepartments } from "@/services/departmentService";
+import { getRooms } from "@/services/roomService";
+import { getAllBookings } from "@/services/bookingService";
 import { Badge } from "@/components/ui/badge";
 
 interface DashboardStats {
@@ -38,16 +40,36 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       const deptResponse = await getDepartments();
       const departments = deptResponse.success ? deptResponse.data || [] : [];
       
+      // Fetch rooms data
+      const roomsResponse = await getRooms();
+      const rooms = roomsResponse.success ? roomsResponse.data || [] : [];
+      
+      // Fetch bookings data
+      const bookingsResponse = await getAllBookings();
+      const bookings = bookingsResponse.success ? bookingsResponse.data || [] : [];
+      
+      // Calculate active bookings (confirmed status and future dates)
+      const now = new Date();
+      const activeBookings = bookings.filter((booking: any) => 
+        booking.status === 'confirmed' && new Date(booking.start_time) > now
+      );
+      
       setStats({
         totalUsers: users.length,
         activeUsers: users.filter((u: any) => u.status === 'active').length,
-        totalRooms: 25, // This would come from rooms API
-        totalBookings: 150, // This would come from bookings API
-        pendingMaintenance: 8, // This would come from maintenance API
+        totalRooms: rooms.length,
+        totalBookings: activeBookings.length,
+        pendingMaintenance: 8, // This would come from maintenance API when available
         activeDepartments: departments.filter((d: any) => d.status === 'active').length
       });
     } catch (error) {
       console.error('Dashboard data loading error:', error);
+      // Set default values on error to prevent showing 0
+      setStats(prevStats => ({
+        ...prevStats,
+        totalRooms: 0,
+        totalBookings: 0
+      }));
     } finally {
       setLoading(false);
     }
@@ -92,7 +114,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
     {
       title: "Active Bookings",
       value: stats.totalBookings,
-      subtitle: "This month",
+      subtitle: "Confirmed & upcoming",
       icon: Calendar,
       color: "text-purple-600",
       bgGradient: "from-purple-500/10 to-purple-600/10",
