@@ -1,5 +1,8 @@
 
 -- KCA Room Management System Database Schema
+CREATE DATABASE kca_room_management;
+USE kca_room_management;
+-- Drop existing tables if they exist
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
