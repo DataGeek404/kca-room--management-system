@@ -1,7 +1,7 @@
 
 -- Create database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS room_management_system;
-USE room_management_system;
+CREATE DATABASE IF NOT EXISTS kca_room_management;
+USE kca_room_management;
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
