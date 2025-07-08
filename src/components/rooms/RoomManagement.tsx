@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +15,8 @@ export const RoomManagement = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [buildingFilter, setBuildingFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [buildingFilter, setBuildingFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -37,8 +36,8 @@ export const RoomManagement = () => {
       setLoading(true);
       const params = {
         search: searchTerm || undefined,
-        building: buildingFilter || undefined,
-        status: statusFilter || undefined
+        building: buildingFilter === "all" ? undefined : buildingFilter,
+        status: statusFilter === "all" ? undefined : statusFilter
       };
       const response = await getRooms(params);
       if (response.success && response.data) {
@@ -291,7 +290,7 @@ export const RoomManagement = () => {
             <SelectValue placeholder="All Buildings" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Buildings</SelectItem>
+            <SelectItem value="all">All Buildings</SelectItem>
             <SelectItem value="Main Building">Main Building</SelectItem>
             <SelectItem value="IT Building">IT Building</SelectItem>
             <SelectItem value="Admin Block">Admin Block</SelectItem>
@@ -305,7 +304,7 @@ export const RoomManagement = () => {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="available">Available</SelectItem>
             <SelectItem value="maintenance">Maintenance</SelectItem>
             <SelectItem value="occupied">Occupied</SelectItem>
@@ -410,7 +409,6 @@ export const RoomManagement = () => {
             <DialogTitle>Edit Room</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Same form fields as add dialog */}
             <div className="space-y-2">
               <Label htmlFor="edit-name">Room Name</Label>
               <Input
