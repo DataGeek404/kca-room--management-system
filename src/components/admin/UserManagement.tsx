@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -391,19 +392,20 @@ export const UserManagement = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filteredUsers.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              onEdit={(user) => {
-                setEditingUser(user);
-                setIsEditDialogOpen(true);
-              }}
-              onDelete={(user) => handleDelete(user)}
-              onStatusChange={(user, status) => handleStatusChange(user, status)}
-              onRoleChange={(user, role) => handleRoleChange(user, role)}
-            />
+            <div key={user.id} className="h-full">
+              <UserCard
+                user={user}
+                onEdit={(user) => {
+                  setEditingUser(user);
+                  setIsEditDialogOpen(true);
+                }}
+                onDelete={(user) => handleDelete(user)}
+                onStatusChange={(user, status) => handleStatusChange(user, status)}
+                onRoleChange={(user, role) => handleRoleChange(user, role)}
+              />
+            </div>
           ))}
         </div>
       )}
