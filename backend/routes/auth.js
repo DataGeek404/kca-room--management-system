@@ -1,4 +1,5 @@
 
+
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -114,6 +115,12 @@ router.post(
 
       const user = users[0];
       console.log('User found:', { id: user.id, email: user.email, role: user.role });
+
+      // Check if password exists in database
+      if (!user.password) {
+        console.log('Password is null/undefined for user:', email);
+        return res.status(400).json({ success: false, message: 'Account configuration error. Please contact administrator.' });
+      }
 
       // Check password
       const isMatch = await bcrypt.compare(password, user.password);
