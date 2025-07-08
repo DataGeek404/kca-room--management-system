@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Settings, Building, Wrench, BarChart3, Bell, Clock, MapPin } from "lucide-react";
+import { Calendar, Users, Settings, Building, Building2, Wrench, BarChart3, Bell, Clock, MapPin, FileText } from "lucide-react";
 import { AdminDashboard } from "./AdminDashboard";
 import { LecturerDashboard } from "./LecturerDashboard"; 
 import { MaintenanceDashboard } from "./MaintenanceDashboard";
