@@ -1,63 +1,44 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { MaintenanceRequest, getMaintenanceRequests } from "@/services/maintenanceService";
 
 export const MaintenanceHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [history, setHistory] = useState<MaintenanceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const history = [
-    {
-      id: "1",
-      roomName: "A101",
-      issue: "Two desk chairs had broken wheels - replaced with new ergonomic chairs",
-      priority: "medium",
-      reportedBy: "Maintenance Staff",
-      reportedAt: "2024-07-06T11:00:00Z",
-      completedAt: "2024-07-07T16:30:00Z",
-      technician: "Mike Johnson",
-      cost: 150
-    },
-    {
-      id: "2",
-      roomName: "B205",
-      issue: "Smart board calibration and software update completed",
-      priority: "low",
-      reportedBy: "Prof. Davis",
-      reportedAt: "2024-07-05T09:15:00Z",
-      completedAt: "2024-07-05T14:20:00Z",
-      technician: "Sarah Tech",
-      cost: 0
-    },
-    {
-      id: "3",
-      roomName: "C301",
-      issue: "Complete HVAC system servicing and filter replacement",
-      priority: "high",
-      reportedBy: "Admin Office",
-      reportedAt: "2024-07-01T08:00:00Z",
-      completedAt: "2024-07-02T17:45:00Z",
-      technician: "External Contractor",
-      cost: 450
-    },
-    {
-      id: "4",
-      roomName: "A102", 
-      issue: "Projector lamp replacement and lens cleaning",
-      priority: "medium",
-      reportedBy: "Prof. Johnson",
-      reportedAt: "2024-06-28T13:30:00Z",
-      completedAt: "2024-06-29T10:15:00Z",
-      technician: "Mike Johnson",
-      cost: 85
+  const loadHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await getMaintenanceRequests({ status: 'completed' });
+      
+      if (response.success && response.data) {
+        setHistory(response.data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load maintenance history",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   const filteredHistory = history.filter(item =>
-    item.roomName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.room_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.issue.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.technician.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getPriorityColor = (priority: string) => {
@@ -84,7 +65,9 @@ export const MaintenanceHistory = () => {
     });
   };
 
-  const calculateDuration = (start: string, end: string) => {
+  const calculateDuration = (start: string, end: string | null) => {
+    if (!end) return 'N/A';
+    
     const startDate = new Date(start);
     const endDate = new Date(end);
     const diffHours = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60));
@@ -98,7 +81,13 @@ export const MaintenanceHistory = () => {
     }
   };
 
-  const totalCost = history.reduce((sum, item) => sum + item.cost, 0);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -117,18 +106,21 @@ export const MaintenanceHistory = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">
-              ${totalCost.toLocaleString()}
+              {history.filter(h => h.priority === 'high').length}
             </div>
-            <div className="text-sm text-gray-600">Total Cost</div>
+            <div className="text-sm text-gray-600">High Priority</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">
-              {Math.round(history.reduce((sum, item) => {
-                const duration = calculateDuration(item.reportedAt, item.completedAt);
-                return sum + parseInt(duration);
-              }, 0) / history.length)}h
+              {history.length > 0 ? Math.round(
+                history.reduce((sum, item) => {
+                  const duration = calculateDuration(item.created_at, item.completed_at);
+                  const hours = parseInt(duration) || 0;
+                  return sum + hours;
+                }, 0) / history.length
+              ) : 0}h
             </div>
             <div className="text-sm text-gray-600">Avg Duration</div>
           </CardContent>
@@ -136,7 +128,7 @@ export const MaintenanceHistory = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {new Set(history.map(h => h.roomName)).size}
+              {new Set(history.map(h => h.room_name)).size}
             </div>
             <div className="text-sm text-gray-600">Rooms Serviced</div>
           </CardContent>
@@ -145,7 +137,7 @@ export const MaintenanceHistory = () => {
 
       <div className="flex gap-4">
         <Input
-          placeholder="Search by room, issue, or technician..."
+          placeholder="Search by room, issue, or description..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
@@ -158,16 +150,16 @@ export const MaintenanceHistory = () => {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">Room {item.roomName}</CardTitle>
+                  <CardTitle className="text-lg">Room {item.room_name}</CardTitle>
                   <p className="text-sm text-gray-600">
-                    Completed by {item.technician}
+                    Reported by {item.reported_by_name}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={getPriorityColor(item.priority)}>
                     {item.priority.toUpperCase()}
                   </Badge>
-                  <Badge className="bg-green-100 text-green-800">
+                  <Badge className="status-completed">
                     COMPLETED
                   </Badge>
                 </div>
@@ -175,47 +167,50 @@ export const MaintenanceHistory = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Work Performed</h4>
+                <h4 className="font-medium text-gray-900 mb-2">Issue</h4>
                 <p className="text-gray-700 text-sm leading-relaxed">{item.issue}</p>
+                {item.description && (
+                  <p className="text-gray-600 text-sm mt-2">{item.description}</p>
+                )}
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Reported</p>
-                  <p className="font-medium">{formatDate(item.reportedAt)}</p>
+                  <p className="font-medium">{formatDate(item.created_at)}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Completed</p>
-                  <p className="font-medium">{formatDate(item.completedAt)}</p>
+                  <p className="font-medium">
+                    {item.completed_at ? formatDate(item.completed_at) : 'N/A'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500">Duration</p>
                   <p className="font-medium">
-                    {calculateDuration(item.reportedAt, item.completedAt)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Cost</p>
-                  <p className="font-medium">
-                    {item.cost > 0 ? `$${item.cost}` : 'No Cost'}
+                    {calculateDuration(item.created_at, item.completed_at)}
                   </p>
                 </div>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-700">
-                  <strong>Reported by:</strong> {item.reportedBy}
-                </p>
-              </div>
+              {item.notes && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    <strong>Notes:</strong> {item.notes}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {filteredHistory.length === 0 && (
+      {filteredHistory.length === 0 && !loading && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">No maintenance history found</p>
-          <p className="text-gray-400">Try adjusting your search terms</p>
+          <p className="text-gray-400">
+            {searchTerm ? 'Try adjusting your search terms' : 'No completed maintenance requests yet'}
+          </p>
         </div>
       )}
     </div>
