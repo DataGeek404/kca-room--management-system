@@ -21,9 +21,9 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
     to: new Date()
   });
   const [filters, setFilters] = useState({
-    building: "",
-    floor: "",
-    department: ""
+    building: "all",
+    floor: "all",
+    department: "all"
   });
 
   const handleExport = () => {
@@ -107,7 +107,7 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
                 <SelectValue placeholder="All buildings" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All buildings</SelectItem>
+                <SelectItem value="all">All buildings</SelectItem>
                 <SelectItem value="Main Building">Main Building</SelectItem>
                 <SelectItem value="IT Building">IT Building</SelectItem>
                 <SelectItem value="Admin Block">Admin Block</SelectItem>
@@ -127,7 +127,7 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
                 <SelectValue placeholder="All floors" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All floors</SelectItem>
+                <SelectItem value="all">All floors</SelectItem>
                 <SelectItem value="1">Floor 1</SelectItem>
                 <SelectItem value="2">Floor 2</SelectItem>
                 <SelectItem value="3">Floor 3</SelectItem>
@@ -146,7 +146,7 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
                 <SelectValue placeholder="All departments" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All departments</SelectItem>
+                <SelectItem value="all">All departments</SelectItem>
                 <SelectItem value="Computer Science">Computer Science</SelectItem>
                 <SelectItem value="Business">Business</SelectItem>
                 <SelectItem value="Engineering">Engineering</SelectItem>
