@@ -27,6 +27,17 @@ export interface AuthResponse {
   };
 }
 
+export interface ProfileResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    id: number;
+    name: string;
+    email: string;
+    role: 'admin' | 'lecturer' | 'maintenance';
+  };
+}
+
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
@@ -56,6 +67,29 @@ export const registerUser = async (credentials: RegisterCredentials): Promise<Au
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || 'Registration failed');
+  }
+
+  return response.json();
+};
+
+export const getProfile = async (): Promise<ProfileResponse> => {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to get profile');
   }
 
   return response.json();
