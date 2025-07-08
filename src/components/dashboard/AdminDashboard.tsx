@@ -12,7 +12,7 @@ import { BookingForm } from "@/components/bookings/BookingForm";
 import { getRooms, createRoom } from "@/services/roomService";
 import { getMyBookings } from "@/services/bookingService";
 import { Plus, Users, FileText, Settings, Building2, TrendingUp, Activity, AlertTriangle, CheckCircle } from "lucide-react";
-import Swal from "sweetalert2";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminDashboardProps {
   activeView: string;
@@ -27,54 +27,7 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
   });
   const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
-
-  const showSuccessToast = (message: string) => {
-    Swal.fire({
-      title: 'Success!',
-      text: message,
-      icon: 'success',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      background: 'hsl(142, 76%, 36%)',
-      color: '#ffffff',
-      iconColor: '#ffffff'
-    });
-  };
-
-  const showErrorToast = (message: string) => {
-    Swal.fire({
-      title: 'Error!',
-      text: message,
-      icon: 'error',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      background: 'hsl(0, 70%, 55%)',
-      color: '#ffffff',
-      iconColor: '#ffffff'
-    });
-  };
-
-  const showWarningToast = (message: string) => {
-    Swal.fire({
-      title: 'Warning!',
-      text: message,
-      icon: 'warning',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      background: 'hsl(38, 92%, 50%)',
-      color: '#ffffff',
-      iconColor: '#ffffff'
-    });
-  };
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadStats = async () => {
@@ -106,59 +59,47 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
         }
       } catch (error) {
         console.error('Failed to load dashboard stats:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard statistics",
+          variant: "destructive",
+        });
       }
     };
 
     if (activeView === "dashboard") {
       loadStats();
     }
-  }, [activeView]);
+  }, [activeView, toast]);
 
   const handleRoomSubmit = async (formData: any) => {
     try {
       await createRoom(formData);
-      showSuccessToast("Room created successfully");
+      toast({
+        title: "Success!",
+        description: "Room created successfully",
+      });
       setIsRoomDialogOpen(false);
     } catch (error) {
-      showErrorToast("Failed to create room");
+      toast({
+        title: "Error!",
+        description: "Failed to create room",
+        variant: "destructive",
+      });
     }
   };
 
   const handleGenerateReport = () => {
-    Swal.fire({
-      title: 'Generate Report?',
-      text: "This will create a comprehensive usage report.",
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: 'hsl(220, 80%, 50%)',
-      cancelButtonColor: 'hsl(220, 10%, 45%)',
-      confirmButtonText: 'Generate',
-      cancelButtonText: 'Cancel',
-      background: 'hsl(0, 0%, 100%)',
-      color: 'hsl(220, 10%, 15%)'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        showSuccessToast("Report generation started");
-      }
+    toast({
+      title: "Report Generation",
+      description: "Report generation started successfully",
     });
   };
 
   const handleMaintenanceCheck = () => {
-    Swal.fire({
-      title: 'Start Maintenance Check?',
-      text: "This will initiate a system-wide maintenance check.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: 'hsl(38, 92%, 50%)',
-      cancelButtonColor: 'hsl(220, 10%, 45%)',
-      confirmButtonText: 'Start Check',
-      cancelButtonText: 'Cancel',
-      background: 'hsl(0, 0%, 100%)',
-      color: 'hsl(220, 10%, 15%)'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        showWarningToast("Maintenance check initiated");
-      }
+    toast({
+      title: "Maintenance Check",
+      description: "Maintenance check initiated",
     });
   };
 
