@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -193,6 +192,44 @@
     @apply card-elevated p-4 sm:p-6 rounded-xl backdrop-blur-sm bg-card/95;
   }
 
+  /* Sidebar-specific responsive layout */
+  .sidebar-layout {
+    @apply min-h-screen;
+  }
+  
+  .sidebar-main-content {
+    @apply ml-0 lg:ml-64 transition-all duration-300 ease-in-out min-h-screen;
+  }
+  
+  .sidebar-main-content.collapsed {
+    @apply lg:ml-16;
+  }
+
+  /* Mobile-first sidebar adjustments */
+  @media (max-width: 1023px) {
+    .sidebar-main-content {
+      @apply ml-0;
+    }
+  }
+
+  /* Ensure proper spacing for fixed sidebar */
+  .app-container {
+    @apply relative min-h-screen;
+  }
+
+  .app-container.has-sidebar {
+    @apply lg:pl-64;
+  }
+
+  .app-container.has-sidebar.sidebar-collapsed {
+    @apply lg:pl-16;
+  }
+
+  /* Mobile menu button positioning */
+  .mobile-menu-btn {
+    @apply fixed top-4 left-4 z-50 lg:hidden;
+  }
+
   /* Button Enhancements */
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-200;
@@ -368,7 +405,7 @@
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Mobile-specific optimizations */
+/* Enhanced mobile-specific optimizations */
 @media (max-width: 640px) {
   .container-responsive {
     @apply px-3;
@@ -381,6 +418,11 @@
   .section-padding {
     @apply px-3 py-3;
   }
+  
+  /* Ensure mobile sidebar doesn't interfere with content */
+  .sidebar-main-content {
+    @apply ml-0 w-full;
+  }
 }
 
 /* Tablet-specific optimizations */
@@ -388,12 +430,26 @@
   .grid-responsive {
     @apply grid-cols-2 gap-4;
   }
+  
+  /* Tablet sidebar handling */
+  .sidebar-main-content {
+    @apply ml-0;
+  }
 }
 
 /* Desktop-specific optimizations */
 @media (min-width: 1025px) {
   .grid-responsive {
     @apply grid-cols-3 xl:grid-cols-4 gap-6;
+  }
+  
+  /* Desktop sidebar spacing */
+  .sidebar-main-content {
+    @apply ml-64;
+  }
+  
+  .sidebar-main-content.collapsed {
+    @apply ml-16;
   }
 }
 

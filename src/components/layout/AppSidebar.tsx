@@ -95,11 +95,11 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
 
   return (
     <>
-      {/* Mobile Menu Button - Fixed position at top left */}
+      {/* Mobile Menu Button - Fixed at top left */}
       <Button
         variant="ghost"
         size="sm"
-        className="fixed top-4 left-4 z-50 lg:hidden bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:bg-gray-50 transition-all duration-200"
+        className="fixed top-4 left-4 z-50 lg:hidden bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:bg-gray-50 transition-all duration-200 rounded-lg"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? <X className="h-5 w-5 text-gray-700" /> : <Menu className="h-5 w-5 text-gray-700" />}
@@ -108,22 +108,23 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-sm"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      <Sidebar 
-        className={cn(
-          "border-r bg-white shadow-xl border-gray-200 transition-all duration-300 ease-in-out",
-          // Mobile: Fixed positioning at top left
-          "fixed inset-y-0 left-0 z-40 lg:relative lg:z-0",
-          // Mobile visibility control
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        )}
-        collapsible="icon"
-      >
-        <SidebarHeader className="border-b border-gray-200 p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+      {/* Sidebar - Fixed positioning */}
+      <div className={cn(
+        "fixed top-0 left-0 h-screen bg-white border-r border-gray-200 shadow-xl z-40 transition-all duration-300 ease-in-out flex flex-col",
+        // Mobile: Transform based on state
+        isMobileOpen ? "translate-x-0 w-80" : "-translate-x-full w-80",
+        // Desktop: Always visible with proper width
+        "lg:translate-x-0",
+        isCollapsed ? "lg:w-16" : "lg:w-64"
+      )}>
+        
+        {/* Header */}
+        <div className="border-b border-gray-200 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className={cn("flex items-center gap-3 transition-all duration-300", isCollapsed && !isMobileOpen && "justify-center")}>
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 p-2.5 shadow-lg">
@@ -151,89 +152,78 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
               </Button>
             )}
           </div>
-        </SidebarHeader>
+        </div>
 
-        <SidebarContent className="px-3 py-4 bg-white">
-          <SidebarGroup>
-            <SidebarGroupLabel className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "sr-only")}>
+        {/* Content */}
+        <div className="flex-1 px-3 py-4 bg-white overflow-y-auto">
+          <div className="mb-6">
+            <div className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "sr-only")}>
               Navigation
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={activeView === item.id}
-                      onClick={() => handleMenuClick(item.id)}
-                      tooltip={isCollapsed && !isMobileOpen ? `${item.label} - ${item.description}` : undefined}
-                      className={cn(
-                        "group w-full rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 mb-1",
-                        "border border-transparent hover:border-gray-200 hover:shadow-sm",
-                        activeView === item.id 
-                          ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border-blue-200 font-semibold" 
-                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                        (isCollapsed && !isMobileOpen) ? "justify-center px-2" : "justify-start"
-                      )}
-                    >
-                      <item.icon 
-                        className={cn(
-                          "h-5 w-5 flex-shrink-0 transition-colors duration-200",
-                          activeView === item.id ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700",
-                          (!isCollapsed || isMobileOpen) && "mr-3"
-                        )} 
-                      />
-                      {(!isCollapsed || isMobileOpen) && (
-                        <div className="flex-1 text-left min-w-0">
-                          <span className="block truncate font-medium">{item.label}</span>
-                          <span className="block truncate text-xs text-gray-500 font-normal mt-0.5">{item.description}</span>
-                        </div>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          <SidebarGroup className="mt-6">
-            <SidebarGroupLabel className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "sr-only")}>
-              Account
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={activeView === "settings"}
-                    onClick={() => handleMenuClick("settings")}
-                    tooltip={isCollapsed && !isMobileOpen ? "Settings - Manage preferences" : undefined}
+            </div>
+            <div className="space-y-1">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleMenuClick(item.id)}
+                  className={cn(
+                    "group w-full rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 mb-1 flex items-start",
+                    "border border-transparent hover:border-gray-200 hover:shadow-sm",
+                    activeView === item.id 
+                      ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border-blue-200 font-semibold" 
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                    (isCollapsed && !isMobileOpen) ? "justify-center px-2" : "justify-start"
+                  )}
+                >
+                  <item.icon 
                     className={cn(
-                      "w-full rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200",
-                      "border border-transparent hover:border-gray-200 hover:shadow-sm",
-                      activeView === "settings" 
-                        ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border-blue-200 font-semibold" 
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                      (isCollapsed && !isMobileOpen) ? "justify-center px-2" : "justify-start"
-                    )}
-                  >
-                    <Settings className={cn(
                       "h-5 w-5 flex-shrink-0 transition-colors duration-200",
-                      activeView === "settings" ? "text-blue-600" : "text-gray-500",
+                      activeView === item.id ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700",
                       (!isCollapsed || isMobileOpen) && "mr-3"
-                    )} />
-                    {(!isCollapsed || isMobileOpen) && (
-                      <div className="flex-1 text-left min-w-0">
-                        <span className="block text-sm font-medium">Settings</span>
-                        <span className="block text-xs text-gray-500 font-normal mt-0.5">Preferences</span>
-                      </div>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
+                    )} 
+                  />
+                  {(!isCollapsed || isMobileOpen) && (
+                    <div className="flex-1 text-left min-w-0">
+                      <span className="block truncate font-medium">{item.label}</span>
+                      <span className="block truncate text-xs text-gray-500 font-normal mt-0.5">{item.description}</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <SidebarFooter className="border-t border-gray-200 p-4 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="mt-6">
+            <div className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "sr-only")}>
+              Account
+            </div>
+            <button
+              onClick={() => handleMenuClick("settings")}
+              className={cn(
+                "w-full rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 flex items-start",
+                "border border-transparent hover:border-gray-200 hover:shadow-sm",
+                activeView === "settings" 
+                  ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border-blue-200 font-semibold" 
+                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+                (isCollapsed && !isMobileOpen) ? "justify-center px-2" : "justify-start"
+              )}
+            >
+              <Settings className={cn(
+                "h-5 w-5 flex-shrink-0 transition-colors duration-200",
+                activeView === "settings" ? "text-blue-600" : "text-gray-500",
+                (!isCollapsed || isMobileOpen) && "mr-3"
+              )} />
+              {(!isCollapsed || isMobileOpen) && (
+                <div className="flex-1 text-left min-w-0">
+                  <span className="block text-sm font-medium">Settings</span>
+                  <span className="block text-xs text-gray-500 font-normal mt-0.5">Preferences</span>
+                </div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-200 p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
           {(!isCollapsed || isMobileOpen) ? (
             <div className="animate-fade-in space-y-3">
               <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -283,8 +273,8 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
               )}
             </div>
           )}
-        </SidebarFooter>
-      </Sidebar>
+        </div>
+      </div>
     </>
   );
 };
