@@ -95,7 +95,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
 
   return (
     <>
-      {/* Mobile Menu Button - Only visible on mobile */}
+      {/* Mobile Menu Button - Fixed position at top left */}
       <Button
         variant="ghost"
         size="sm"
@@ -108,27 +108,25 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/30 z-40 lg:hidden backdrop-blur-sm"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       <Sidebar 
         className={cn(
-          "border-r bg-white shadow-lg border-gray-100 transition-all duration-300 ease-in-out",
-          // Mobile: position fixed to appear on top left
-          "fixed inset-y-0 left-0 z-40",
-          // Desktop: normal positioning  
-          "lg:relative lg:z-0",
+          "border-r bg-white shadow-xl border-gray-200 transition-all duration-300 ease-in-out",
+          // Mobile: Fixed positioning at top left
+          "fixed inset-y-0 left-0 z-40 lg:relative lg:z-0",
           // Mobile visibility control
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
         collapsible="icon"
       >
-        <SidebarHeader className="border-b border-gray-100 p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <SidebarHeader className="border-b border-gray-200 p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center justify-between">
             <div className={cn("flex items-center gap-3 transition-all duration-300", isCollapsed && !isMobileOpen && "justify-center")}>
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 p-2.5 shadow-md">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 p-2.5 shadow-lg">
                 <img 
                   src="/lovable-uploads/7058a8d7-bb65-444c-99ce-78b033e0b8e0.png" 
                   alt="KCA University Logo" 
@@ -235,7 +233,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-gray-100 p-4 bg-gradient-to-r from-gray-50 to-gray-100">
+        <SidebarFooter className="border-t border-gray-200 p-4 bg-gradient-to-r from-gray-50 to-gray-100">
           {(!isCollapsed || isMobileOpen) ? (
             <div className="animate-fade-in space-y-3">
               <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
