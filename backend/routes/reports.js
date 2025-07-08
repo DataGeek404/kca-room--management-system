@@ -1,7 +1,7 @@
 
 const express = require('express');
 const pool = require('../config/database');
-const { authorize } = require('../middleware/auth');
+const { authorize, authorizeWithFiltering } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -57,7 +57,7 @@ const router = express.Router();
  * @swagger
  * /api/reports/room-utilization:
  *   get:
- *     summary: Get room utilization report (Admin only)
+ *     summary: Get room utilization report
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
@@ -89,25 +89,38 @@ const router = express.Router();
  *                   items:
  *                     $ref: '#/components/schemas/RoomUtilization'
  */
-router.get('/room-utilization', authorize('admin'), async (req, res) => {
+router.get('/room-utilization', authorizeWithFiltering('admin', 'lecturer', 'maintenance'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
+    const { role, userId } = req.userContext;
 
-    const [data] = await pool.execute(
-      `SELECT 
-         r.id, r.name, r.building, r.floor, r.capacity,
-         COUNT(b.id) as total_bookings,
-         COALESCE(SUM(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as total_hours,
-         COALESCE(AVG(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as avg_booking_duration
-       FROM rooms r
-       LEFT JOIN bookings b ON r.id = b.room_id 
-         AND b.status = 'confirmed'
-         AND b.start_time >= ? 
-         AND b.end_time <= ?
-       GROUP BY r.id
-       ORDER BY total_bookings DESC`,
-      [startDate || '2024-01-01', endDate || '2024-12-31']
-    );
+    let query = `
+      SELECT 
+        r.id, r.name, r.building, r.floor, r.capacity,
+        COUNT(b.id) as total_bookings,
+        COALESCE(SUM(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as total_hours,
+        COALESCE(AVG(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as avg_booking_duration
+      FROM rooms r
+      LEFT JOIN bookings b ON r.id = b.room_id 
+        AND b.status = 'confirmed'
+        AND b.start_time >= ? 
+        AND b.end_time <= ?
+    `;
+
+    let params = [startDate || '2024-01-01', endDate || '2024-12-31'];
+
+    // Filter data based on user role
+    if (role === 'lecturer') {
+      query += ` AND (b.user_id = ? OR b.user_id IS NULL)`;
+      params.push(userId);
+    } else if (role === 'maintenance') {
+      // Maintenance can see all room data for their work
+      // No additional filtering needed
+    }
+
+    query += ` GROUP BY r.id ORDER BY total_bookings DESC`;
+
+    const [data] = await pool.execute(query, params);
 
     res.json({
       success: true,
@@ -126,7 +139,7 @@ router.get('/room-utilization', authorize('admin'), async (req, res) => {
  * @swagger
  * /api/reports/booking-stats:
  *   get:
- *     summary: Get booking statistics (Admin only)
+ *     summary: Get booking statistics
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
@@ -143,8 +156,23 @@ router.get('/room-utilization', authorize('admin'), async (req, res) => {
  *                 data:
  *                   $ref: '#/components/schemas/BookingStats'
  */
-router.get('/booking-stats', authorize('admin'), async (req, res) => {
+router.get('/booking-stats', authorizeWithFiltering('admin', 'lecturer', 'maintenance'), async (req, res) => {
   try {
+    const { role, userId } = req.userContext;
+    
+    let whereClause = '';
+    let params = [];
+    
+    // Filter based on user role
+    if (role === 'lecturer') {
+      whereClause = 'WHERE user_id = ?';
+      params = [userId];
+    } else if (role === 'maintenance') {
+      // Maintenance sees all bookings (they need full system view)
+      whereClause = '';
+      params = [];
+    }
+
     const [stats] = await pool.execute(`
       SELECT 
         COUNT(*) as total_bookings,
@@ -152,7 +180,8 @@ router.get('/booking-stats', authorize('admin'), async (req, res) => {
         COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_bookings,
         COUNT(CASE WHEN start_time > NOW() THEN 1 END) as upcoming_bookings
       FROM bookings
-    `);
+      ${whereClause}
+    `, params);
 
     const [monthlyStats] = await pool.execute(`
       SELECT 
@@ -160,9 +189,10 @@ router.get('/booking-stats', authorize('admin'), async (req, res) => {
         COUNT(*) as bookings_count
       FROM bookings
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+      ${whereClause ? (whereClause.includes('WHERE') ? 'AND user_id = ?' : 'WHERE user_id = ?') : ''}
       GROUP BY DATE_FORMAT(created_at, '%Y-%m')
       ORDER BY month
-    `);
+    `, role === 'lecturer' ? [userId] : []);
 
     res.json({
       success: true,
@@ -184,7 +214,7 @@ router.get('/booking-stats', authorize('admin'), async (req, res) => {
  * @swagger
  * /api/reports/user-activity:
  *   get:
- *     summary: Get user activity report (Admin only)
+ *     summary: Get user activity report
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
@@ -192,9 +222,11 @@ router.get('/booking-stats', authorize('admin'), async (req, res) => {
  *       200:
  *         description: User activity data
  */
-router.get('/user-activity', authorize('admin'), async (req, res) => {
+router.get('/user-activity', authorizeWithFiltering('admin', 'lecturer', 'maintenance'), async (req, res) => {
   try {
-    const [data] = await pool.execute(`
+    const { role, userId } = req.userContext;
+    
+    let query = `
       SELECT 
         u.id, u.name, u.email, u.role,
         COUNT(b.id) as total_bookings,
@@ -203,9 +235,22 @@ router.get('/user-activity', authorize('admin'), async (req, res) => {
         MAX(b.created_at) as last_booking_date
       FROM users u
       LEFT JOIN bookings b ON u.id = b.user_id
-      GROUP BY u.id
-      ORDER BY total_bookings DESC
-    `);
+    `;
+
+    let params = [];
+
+    // Filter based on user role
+    if (role === 'lecturer') {
+      query += ` WHERE u.id = ?`;
+      params = [userId];
+    } else if (role === 'maintenance') {
+      // Maintenance can see all users for system maintenance purposes
+      // No additional filtering needed
+    }
+
+    query += ` GROUP BY u.id ORDER BY total_bookings DESC`;
+
+    const [data] = await pool.execute(query, params);
 
     res.json({
       success: true,

@@ -88,11 +88,11 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
     <Sidebar 
       className={cn(
         "border-r bg-white transition-all duration-300 ease-in-out",
-        "shadow-sm border-gray-200"
+        "shadow-sm border-gray-100"
       )}
       collapsible="icon"
     >
-      <SidebarHeader className="border-b border-gray-100 p-4">
+      <SidebarHeader className="border-b border-gray-50 p-6 bg-white">
         <div className="flex items-center justify-between">
           <div className={cn("flex items-center gap-3 transition-all duration-300", isCollapsed && "justify-center")}>
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-600 p-2 shadow-sm">
@@ -114,7 +114,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
               variant="ghost"
               size="sm"
               onClick={toggleSidebar}
-              className="h-8 w-8 p-0 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              className="h-8 w-8 p-0 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -122,13 +122,13 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
+      <SidebarContent className="px-4 py-6 bg-white">
         <SidebarGroup>
-          <SidebarGroupLabel className={cn("px-3 text-xs font-medium text-gray-500 uppercase tracking-wider", isCollapsed && "sr-only")}>
+          <SidebarGroupLabel className={cn("px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider", isCollapsed && "sr-only")}>
             Navigation
           </SidebarGroupLabel>
-          <SidebarGroupContent className="mt-2">
-            <SidebarMenu className="space-y-1">
+          <SidebarGroupContent className="mt-3">
+            <SidebarMenu className="space-y-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
@@ -136,11 +136,12 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                     onClick={() => setActiveView(item.id)}
                     tooltip={isCollapsed ? `${item.label} - ${item.description}` : undefined}
                     className={cn(
-                      "group w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      "group w-full rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 mb-1",
+                      "border border-transparent hover:border-gray-100",
                       activeView === item.id 
-                        ? "bg-blue-50 text-blue-700 shadow-sm border border-blue-200" 
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                      isCollapsed ? "justify-center px-2" : "justify-start"
+                        ? "bg-blue-50 text-blue-700 shadow-sm border-blue-100 font-semibold" 
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm",
+                      isCollapsed ? "justify-center px-3" : "justify-start"
                     )}
                   >
                     <item.icon 
@@ -153,7 +154,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                     {!isCollapsed && (
                       <div className="flex-1 text-left">
                         <span className="block truncate">{item.label}</span>
-                        <span className="block truncate text-xs text-gray-400">{item.description}</span>
+                        <span className="block truncate text-xs text-gray-400 font-normal">{item.description}</span>
                       </div>
                     )}
                   </SidebarMenuButton>
@@ -163,11 +164,11 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className={cn("px-3 text-xs font-medium text-gray-500 uppercase tracking-wider", isCollapsed && "sr-only")}>
+        <SidebarGroup className="mt-8">
+          <SidebarGroupLabel className={cn("px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider", isCollapsed && "sr-only")}>
             Account
           </SidebarGroupLabel>
-          <SidebarGroupContent className="mt-2">
+          <SidebarGroupContent className="mt-3">
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -175,11 +176,12 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                   onClick={() => setActiveView("settings")}
                   tooltip={isCollapsed ? "Settings - Manage preferences" : undefined}
                   className={cn(
-                    "w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    "w-full rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                    "border border-transparent hover:border-gray-100",
                     activeView === "settings" 
-                      ? "bg-blue-50 text-blue-700 shadow-sm border border-blue-200" 
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                    isCollapsed ? "justify-center px-2" : "justify-start"
+                      ? "bg-blue-50 text-blue-700 shadow-sm border-blue-100 font-semibold" 
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm",
+                    isCollapsed ? "justify-center px-3" : "justify-start"
                   )}
                 >
                   <Settings className={cn(
@@ -190,7 +192,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                   {!isCollapsed && (
                     <div className="flex-1 text-left">
                       <span className="block text-sm font-medium">Settings</span>
-                      <span className="block text-xs text-gray-400">Preferences</span>
+                      <span className="block text-xs text-gray-400 font-normal">Preferences</span>
                     </div>
                   )}
                 </SidebarMenuButton>
@@ -200,10 +202,10 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-100 p-4">
+      <SidebarFooter className="border-t border-gray-50 p-6 bg-white">
         {!isCollapsed ? (
-          <div className="animate-fade-in space-y-3">
-            <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+          <div className="animate-fade-in space-y-4">
+            <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 shadow-sm">
                 <span className="text-sm font-bold text-white">
                   {user.name.charAt(0).toUpperCase()}
@@ -223,7 +225,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                 variant="outline"
                 size="sm"
                 onClick={onLogout}
-                className="w-full border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                className="w-full border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -231,7 +233,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center space-y-3">
+          <div className="flex flex-col items-center space-y-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 shadow-sm">
               <span className="text-sm font-bold text-white">
                 {user.name.charAt(0).toUpperCase()}
@@ -242,7 +244,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                 variant="ghost"
                 size="sm"
                 onClick={onLogout}
-                className="h-10 w-10 p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                className="h-10 w-10 p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                 title="Logout"
               >
                 <LogOut className="h-4 w-4" />

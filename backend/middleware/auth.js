@@ -59,4 +59,31 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { authenticateToken, authorize };
+// New middleware for role-based data filtering
+const authorizeWithFiltering = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Insufficient permissions'
+      });
+    }
+
+    // Add user context for filtering
+    req.userContext = {
+      role: req.user.role,
+      userId: req.user.id
+    };
+
+    next();
+  };
+};
+
+module.exports = { authenticateToken, authorize, authorizeWithFiltering };
