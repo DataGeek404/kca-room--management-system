@@ -73,6 +73,12 @@ const router = express.Router();
 router.get('/', authorize('admin'), async (req, res) => {
   try {
     console.log('Fetching users from database...');
+    
+    // Test database connection first
+    const connection = await pool.getConnection();
+    console.log('Database connection successful');
+    connection.release();
+    
     const [users] = await pool.execute(
       'SELECT id, name, email, role, phone, bio, avatar, created_at, last_login, status FROM users ORDER BY created_at DESC'
     );
@@ -87,7 +93,7 @@ router.get('/', authorize('admin'), async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });
@@ -116,6 +122,7 @@ router.get('/', authorize('admin'), async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
     console.log('Fetching profile for user ID:', req.user.id);
+    
     const [users] = await pool.execute(
       'SELECT id, name, email, role, phone, bio, avatar, created_at, last_login, status FROM users WHERE id = ?',
       [req.user.id]
@@ -137,7 +144,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch profile',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });
@@ -392,6 +399,15 @@ router.post('/', authorize('admin'), async (req, res) => {
       });
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format'
+      });
+    }
+
     // Check if email already exists
     const [existingUsers] = await pool.execute(
       'SELECT id FROM users WHERE email = ?',
@@ -411,7 +427,7 @@ router.post('/', authorize('admin'), async (req, res) => {
 
     // Create user
     const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO users (name, email, password_hash, role, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
       [name.trim(), email.toLowerCase().trim(), passwordHash, role, 'active']
     );
 
@@ -433,7 +449,7 @@ router.post('/', authorize('admin'), async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create user',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });

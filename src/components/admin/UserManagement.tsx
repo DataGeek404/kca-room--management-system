@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Users, UserCheck, Wrench } from "lucide-react";
@@ -22,11 +23,15 @@ export const UserManagement = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
+      console.log('Loading users...');
       const response = await getUsers();
+      console.log('Users response:', response);
       if (response.success && response.data) {
         setUsers(response.data);
+        console.log('Users loaded successfully:', response.data.length);
       }
     } catch (error) {
+      console.error('Load users error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to load users",
@@ -44,6 +49,7 @@ export const UserManagement = () => {
   const handleSubmit = async (formData: any) => {
     try {
       setIsSubmitting(true);
+      console.log('Submitting form data:', formData);
       
       if (editingUser) {
         // Handle editing - this would require additional backend implementation
@@ -69,6 +75,8 @@ export const UserManagement = () => {
           role: formData.role
         });
         
+        console.log('Create user response:', response);
+        
         if (response.success) {
           toast({
             title: "Success",
@@ -76,10 +84,11 @@ export const UserManagement = () => {
           });
           
           setIsAddDialogOpen(false);
-          loadUsers(); // Reload users to show the new one
+          await loadUsers(); // Reload users to show the new one
         }
       }
     } catch (error) {
+      console.error('Submit error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Operation failed",
@@ -168,13 +177,13 @@ export const UserManagement = () => {
               Add New User
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md" aria-describedby="add-user-description">
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>
+                Create a new user account with name, email, password, and role
+              </DialogDescription>
             </DialogHeader>
-            <div id="add-user-description" className="sr-only">
-              Create a new user account with name, email, password, and role
-            </div>
             <UserForm
               onSubmit={handleSubmit}
               onCancel={() => setIsAddDialogOpen(false)}
@@ -231,9 +240,9 @@ export const UserManagement = () => {
                 setEditingUser(user);
                 setIsEditDialogOpen(true);
               }}
-              onDelete={handleDelete}
-              onStatusChange={handleStatusChange}
-              onRoleChange={handleRoleChange}
+              onDelete={(user) => handleDelete(user)}
+              onStatusChange={(user, status) => handleStatusChange(user, status)}
+              onRoleChange={(user, role) => handleRoleChange(user, role)}
             />
           ))}
         </div>
@@ -241,13 +250,13 @@ export const UserManagement = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md" aria-describedby="edit-user-description">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Edit user information including name, email, and role
+            </DialogDescription>
           </DialogHeader>
-          <div id="edit-user-description" className="sr-only">
-            Edit user information including name, email, and role
-          </div>
           {editingUser && (
             <UserForm
               initialData={editingUser}
