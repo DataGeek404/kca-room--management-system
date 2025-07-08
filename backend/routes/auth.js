@@ -23,14 +23,21 @@ if (!process.env.JWT_SECRET) {
 router.post(
   '/register',
   [
-    body('name', 'Name is required').not().isEmpty(),
-    body('email', 'Please include a valid email').isEmail(),
+    body('name', 'Name is required').not().isEmpty().trim(),
+    body('email', 'Please include a valid email').isEmail().normalizeEmail(),
     body('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
-    body('role', 'Role is required').not().isEmpty()
+    body('role', 'Role is required').isIn(['admin', 'lecturer', 'maintenance'])
   ],
   async (req, res) => {
+    console.log('Registration request received:', { 
+      name: req.body.name, 
+      email: req.body.email, 
+      role: req.body.role 
+    });
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
@@ -41,12 +48,14 @@ router.post(
       let [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
 
       if (users.length > 0) {
+        console.log('User already exists:', email);
         return res.status(400).json({ success: false, message: 'User already exists' });
       }
 
       // Hash password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
+      console.log('Password hashed successfully');
 
       // Insert user into database
       const [result] = await pool.execute(
@@ -55,6 +64,7 @@ router.post(
       );
 
       const userId = result.insertId;
+      console.log('User created with ID:', userId);
 
       // Generate JWT
       const payload = {
@@ -91,12 +101,15 @@ router.post(
 router.post(
   '/login',
   [
-    body('email', 'Please include a valid email').isEmail(),
-    body('password', 'Password is required').exists()
+    body('email', 'Please include a valid email').isEmail().normalizeEmail(),
+    body('password', 'Password is required').notEmpty()
   ],
   async (req, res) => {
+    console.log('Login request received for email:', req.body.email);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Login validation errors:', errors.array());
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
@@ -120,6 +133,12 @@ router.post(
       if (!user.password) {
         console.log('Password is null/undefined for user:', email);
         return res.status(400).json({ success: false, message: 'Account configuration error. Please contact administrator.' });
+      }
+
+      // Validate password format before comparison
+      if (typeof password !== 'string' || typeof user.password !== 'string') {
+        console.log('Invalid password format - password type:', typeof password, 'stored password type:', typeof user.password);
+        return res.status(400).json({ success: false, message: 'Invalid password format' });
       }
 
       // Check password
