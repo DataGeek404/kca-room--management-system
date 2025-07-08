@@ -17,6 +17,10 @@ const Index = () => {
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
   };
+
+  const handleLogout = async () => {
+    logout();
+  };
   
   if (!user) {
     return (
@@ -57,7 +61,7 @@ const Index = () => {
         user={user} 
         activeView={activeView} 
         setActiveView={setActiveView}
-        onLogout={logout}
+        onLogout={handleLogout}
       />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -74,7 +78,7 @@ const Index = () => {
           </Breadcrumb>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          <Dashboard activeView={activeView} user={user} />
+          <Dashboard user={user} onLogout={handleLogout} />
         </div>
       </SidebarInset>
     </>
