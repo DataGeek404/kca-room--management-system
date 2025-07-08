@@ -1,9 +1,8 @@
-
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
-const { validateRegistration, validateLogin } = require('../middleware/validation');
+const { validateRegister, validateLogin } = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -35,7 +34,7 @@ const router = express.Router();
  *                 type: string
  *                 enum: [admin, lecturer, maintenance]
  */
-router.post('/register', validateRegistration, async (req, res) => {
+router.post('/register', validateRegister, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
