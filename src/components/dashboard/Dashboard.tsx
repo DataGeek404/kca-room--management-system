@@ -6,6 +6,12 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AdminDashboard } from "./AdminDashboard";
 import { LecturerDashboard } from "./LecturerDashboard"; 
 import { MaintenanceDashboard } from "./MaintenanceDashboard";
+import { RoomManagement } from "@/components/rooms/RoomManagement";
+import { BookingCalendar } from "@/components/bookings/BookingCalendar";
+import { UserManagement } from "@/components/admin/UserManagement";
+import { DepartmentManagement } from "@/components/admin/DepartmentManagement";
+import { MaintenanceRequests } from "@/components/maintenance/MaintenanceRequests";
+import { ReportsView } from "@/components/reports/ReportsView";
 import { UserSettings } from "@/components/settings/UserSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, Clock } from "lucide-react";
@@ -30,6 +36,46 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
           return <MaintenanceDashboard activeView="overview" />;
         }
         return <div>Dashboard content for {user.role}</div>;
+      
+      case "rooms":
+        return <RoomManagement />;
+      
+      case "bookings":
+        return <BookingCalendar viewType={user.role === 'admin' ? 'admin' : 'user'} />;
+      
+      case "users":
+        return user.role === 'admin' ? <UserManagement /> : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Access Denied</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                You don't have permission to access user management.
+              </p>
+            </CardContent>
+          </Card>
+        );
+      
+      case "departments":
+        return user.role === 'admin' ? <DepartmentManagement /> : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Access Denied</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                You don't have permission to access department management.
+              </p>
+            </CardContent>
+          </Card>
+        );
+      
+      case "maintenance":
+        return <MaintenanceRequests />;
+      
+      case "reports":
+        return <ReportsView />;
       
       case "settings":
         return <UserSettings />;
