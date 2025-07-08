@@ -104,24 +104,56 @@ export const createRoom = async (roomData: CreateRoomData): Promise<ApiResponse<
 };
 
 export const updateRoom = async (id: number, roomData: Partial<CreateRoomData> & { status?: string }): Promise<ApiResponse<Room>> => {
-  const response = await fetch(`${API_BASE_URL}/rooms/${id}`, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(roomData),
-  });
+  try {
+    // Get the current room data first
+    const currentRoomResponse = await fetch(`${API_BASE_URL}/rooms`, {
+      headers: getAuthHeaders(),
+    });
+    
+    if (!currentRoomResponse.ok) {
+      throw new Error('Failed to fetch current room data');
+    }
+    
+    const roomsResult = await currentRoomResponse.json();
+    const currentRoom = roomsResult.data?.find((room: Room) => room.id === id);
+    
+    if (!currentRoom) {
+      throw new Error('Room not found');
+    }
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to update room');
+    // Merge current data with updates to ensure all required fields are present
+    const updateData = {
+      name: roomData.name || currentRoom.name,
+      capacity: roomData.capacity || currentRoom.capacity,
+      building: roomData.building || currentRoom.building,
+      floor: roomData.floor || currentRoom.floor,
+      resources: roomData.resources || currentRoom.resources || [],
+      description: roomData.description !== undefined ? roomData.description : currentRoom.description,
+      status: roomData.status || currentRoom.status
+    };
+
+    const response = await fetch(`${API_BASE_URL}/rooms/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update room');
+    }
+
+    const result = await response.json();
+    
+    if (result.success && result.data) {
+      result.data = parseRoomData(result.data);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error updating room:', error);
+    throw error;
   }
-
-  const result = await response.json();
-  
-  if (result.success && result.data) {
-    result.data = parseRoomData(result.data);
-  }
-
-  return result;
 };
 
 export const deleteRoom = async (id: number): Promise<ApiResponse<void>> => {

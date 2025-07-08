@@ -11,7 +11,7 @@ import { RoomForm } from "@/components/rooms/RoomForm";
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { getRooms, createRoom } from "@/services/roomService";
 import { getMyBookings } from "@/services/bookingService";
-import { Plus, Users, FileText, Settings, Building2 } from "lucide-react";
+import { Plus, Users, FileText, Settings, Building2, TrendingUp, Activity, AlertTriangle, CheckCircle } from "lucide-react";
 import Swal from "sweetalert2";
 
 interface AdminDashboardProps {
@@ -38,8 +38,9 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true,
-      background: '#10b981',
-      color: '#ffffff'
+      background: 'hsl(142, 76%, 36%)',
+      color: '#ffffff',
+      iconColor: '#ffffff'
     });
   };
 
@@ -53,8 +54,9 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true,
-      background: '#ef4444',
-      color: '#ffffff'
+      background: 'hsl(0, 70%, 55%)',
+      color: '#ffffff',
+      iconColor: '#ffffff'
     });
   };
 
@@ -68,8 +70,9 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true,
-      background: '#f59e0b',
-      color: '#ffffff'
+      background: 'hsl(38, 92%, 50%)',
+      color: '#ffffff',
+      iconColor: '#ffffff'
     });
   };
 
@@ -121,24 +124,21 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
     }
   };
 
-  const handleBookingClose = () => {
-    setIsBookingDialogOpen(false);
-  };
-
   const handleGenerateReport = () => {
     Swal.fire({
       title: 'Generate Report?',
       text: "This will create a comprehensive usage report.",
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#3b82f6',
-      cancelButtonColor: '#6b7280',
+      confirmButtonColor: 'hsl(220, 80%, 50%)',
+      cancelButtonColor: 'hsl(220, 10%, 45%)',
       confirmButtonText: 'Generate',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+      background: 'hsl(0, 0%, 100%)',
+      color: 'hsl(220, 10%, 15%)'
     }).then((result) => {
       if (result.isConfirmed) {
         showSuccessToast("Report generation started");
-        // Navigate to reports view or trigger report generation
       }
     });
   };
@@ -149,14 +149,15 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
       text: "This will initiate a system-wide maintenance check.",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#f59e0b',
-      cancelButtonColor: '#6b7280',
+      confirmButtonColor: 'hsl(38, 92%, 50%)',
+      cancelButtonColor: 'hsl(220, 10%, 45%)',
       confirmButtonText: 'Start Check',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+      background: 'hsl(0, 0%, 100%)',
+      color: 'hsl(220, 10%, 15%)'
     }).then((result) => {
       if (result.isConfirmed) {
         showWarningToast("Maintenance check initiated");
-        // Navigate to maintenance view or trigger maintenance workflow
       }
     });
   };
@@ -182,112 +183,138 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 sm:mb-6">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-          <img 
-            src="/lovable-uploads/7058a8d7-bb65-444c-99ce-78b033e0b8e0.png" 
-            alt="KCA University Logo" 
-            className="w-full h-full object-contain"
-          />
+    <div className="min-h-screen bg-background">
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 lg:gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 lg:w-16 lg:h-16 flex-shrink-0 p-2 bg-primary/10 rounded-xl">
+              <img 
+                src="/lovable-uploads/7058a8d7-bb65-444c-99ce-78b033e0b8e0.png" 
+                alt="KCA University Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                KCA Room Management
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-base mt-1">
+                Comprehensive facility management dashboard
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">KCA Room Management Dashboard</h1>
-          <p className="text-gray-600 text-sm sm:text-base">System overview and management</p>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <Card className="gradient-primary text-white border-0 card-hover">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium opacity-90">Total Rooms</CardTitle>
+                <Building2 className="h-5 w-5 opacity-80" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl lg:text-3xl font-bold">{stats.totalRooms}</div>
+              <p className="text-xs opacity-80 mt-1">Across all buildings</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="gradient-success text-white border-0 card-hover">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium opacity-90">Active Bookings</CardTitle>
+                <CheckCircle className="h-5 w-5 opacity-80" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl lg:text-3xl font-bold">{stats.activeBookings}</div>
+              <p className="text-xs opacity-80 mt-1">Current schedule</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="gradient-warning text-white border-0 card-hover">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium opacity-90">Maintenance</CardTitle>
+                <AlertTriangle className="h-5 w-5 opacity-80" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl lg:text-3xl font-bold">{stats.maintenanceRequests}</div>
+              <p className="text-xs opacity-80 mt-1">Rooms under maintenance</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="gradient-info text-white border-0 card-hover">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium opacity-90">Utilization</CardTitle>
+                <TrendingUp className="h-5 w-5 opacity-80" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl lg:text-3xl font-bold">{stats.utilization}%</div>
+              <p className="text-xs opacity-80 mt-1">Current usage</p>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm sm:text-base lg:text-lg">Total Rooms</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.totalRooms}</div>
-            <p className="text-blue-100 text-xs sm:text-sm">Across all buildings</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm sm:text-base lg:text-lg">Active Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.activeBookings}</div>
-            <p className="text-green-100 text-xs sm:text-sm">Current schedule</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm sm:text-base lg:text-lg">Maintenance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.maintenanceRequests}</div>
-            <p className="text-orange-100 text-xs sm:text-sm">Rooms under maintenance</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm sm:text-base lg:text-lg">Utilization</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl lg:text-3xl font-bold">{stats.utilization}%</div>
-            <p className="text-purple-100 text-xs sm:text-sm">Current usage</p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* System Status */}
+          <Card className="xl:col-span-2 card-hover">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                <CardTitle className="text-xl">System Status</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <div>
+                    <p className="font-medium text-sm">Database</p>
+                    <p className="text-xs text-muted-foreground">MySQL Active</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <div>
+                    <p className="font-medium text-sm">API Server</p>
+                    <p className="text-xs text-muted-foreground">Online</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <div>
+                    <p className="font-medium text-sm">Auth System</p>
+                    <p className="text-xs text-muted-foreground">Secure</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg lg:text-xl">System Status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm sm:text-base">Database</p>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">MySQL Connection</p>
-              </div>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex-shrink-0">Connected</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm sm:text-base">API Server</p>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">Backend Services</p>
-              </div>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex-shrink-0">Online</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm sm:text-base">Authentication</p>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">JWT Token System</p>
-              </div>
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex-shrink-0">Active</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg lg:text-xl">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+          {/* Quick Actions */}
+          <Card className="card-hover">
+            <CardHeader>
+              <CardTitle className="text-xl">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               {/* Add Room Dialog */}
               <Dialog open={isRoomDialogOpen} onOpenChange={setIsRoomDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
+                    className="w-full justify-start gap-3 h-12 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 interactive-element"
                     variant="outline"
-                    className="p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 border-blue-200 transition-colors text-left h-auto w-full"
                   >
-                    <div className="flex items-center gap-2 w-full">
-                      <Plus className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-blue-900 text-sm truncate">Add Room</div>
-                        <div className="text-xs text-blue-700 truncate">Create new room</div>
-                      </div>
+                    <Plus className="h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-medium">Add Room</div>
+                      <div className="text-xs opacity-70">Create new facility</div>
                     </div>
                   </Button>
                 </DialogTrigger>
@@ -307,15 +334,13 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
               <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
+                    className="w-full justify-start gap-3 h-12 bg-green-50 hover:bg-green-100 text-green-700 border-green-200 interactive-element"
                     variant="outline"
-                    className="p-3 sm:p-4 bg-green-50 hover:bg-green-100 border-green-200 transition-colors text-left h-auto w-full"
                   >
-                    <div className="flex items-center gap-2 w-full">
-                      <Users className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-green-900 text-sm truncate">Add Booking</div>
-                        <div className="text-xs text-green-700 truncate">Create booking</div>
-                      </div>
+                    <Users className="h-4 w-4" />
+                    <div className="text-left">
+                      <div className="font-medium">New Booking</div>
+                      <div className="text-xs opacity-70">Schedule room</div>
                     </div>
                   </Button>
                 </DialogTrigger>
@@ -328,35 +353,31 @@ export const AdminDashboard = ({ activeView }: AdminDashboardProps) => {
               </Dialog>
 
               <Button
-                variant="outline"
                 onClick={handleMaintenanceCheck}
-                className="p-3 sm:p-4 bg-orange-50 hover:bg-orange-100 border-orange-200 transition-colors text-left h-auto w-full"
+                className="w-full justify-start gap-3 h-12 bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 interactive-element"
+                variant="outline"
               >
-                <div className="flex items-center gap-2 w-full">
-                  <Settings className="h-4 w-4 text-orange-600 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-orange-900 text-sm truncate">Maintenance</div>
-                    <div className="text-xs text-orange-700 truncate">Check status</div>
-                  </div>
+                <Settings className="h-4 w-4" />
+                <div className="text-left">
+                  <div className="font-medium">Maintenance</div>
+                  <div className="text-xs opacity-70">System check</div>
                 </div>
               </Button>
 
               <Button
-                variant="outline"
                 onClick={handleGenerateReport}
-                className="p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 border-purple-200 transition-colors text-left h-auto w-full"
+                className="w-full justify-start gap-3 h-12 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 interactive-element"
+                variant="outline"
               >
-                <div className="flex items-center gap-2 w-full">
-                  <FileText className="h-4 w-4 text-purple-600 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-purple-900 text-sm truncate">Reports</div>
-                    <div className="text-xs text-purple-700 truncate">Generate reports</div>
-                  </div>
+                <FileText className="h-4 w-4" />
+                <div className="text-left">
+                  <div className="font-medium">Generate Report</div>
+                  <div className="text-xs opacity-70">Usage analytics</div>
                 </div>
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
