@@ -36,7 +36,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration - Updated to allow multiple origins
+// CORS configuration - Updated to properly handle all methods including DELETE
 const corsOptions = {
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -44,9 +44,15 @@ const corsOptions = {
     'http://localhost:3000'
   ],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
 };
 app.use(cors(corsOptions));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
