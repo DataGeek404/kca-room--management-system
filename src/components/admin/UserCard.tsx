@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, UserCheck } from "lucide-react";
+import { Edit, Trash2, UserCheck, Mail, Calendar, Shield, User as UserIcon } from "lucide-react";
 
 export interface User {
   id: number;
@@ -24,23 +24,36 @@ interface UserCardProps {
 }
 
 export const UserCard = ({ user, onEdit, onDelete, onStatusChange, onRoleChange }: UserCardProps) => {
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return Shield;
+      case 'lecturer':
+        return UserCheck;
+      case 'maintenance':
+        return UserIcon;
+      default:
+        return UserIcon;
+    }
+  };
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-950/30 dark:text-purple-300';
       case 'lecturer':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-300';
       case 'maintenance':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-950/30 dark:text-orange-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-950/30 dark:text-gray-300';
     }
   };
 
   const getStatusColor = (status: string) => {
     return status === 'active' 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-red-100 text-red-800';
+      ? 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-300'
+      : 'bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-300';
   };
 
   const formatDate = (dateStr: string) => {
@@ -55,38 +68,61 @@ export const UserCard = ({ user, onEdit, onDelete, onStatusChange, onRoleChange 
     });
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const RoleIcon = getRoleIcon(user.role);
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="card-interactive hover:shadow-lg transition-all duration-200 group">
       <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-4">
+        {/* Header with Avatar and Status */}
+        <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-gray-600 font-medium">
-                {user.name.split(' ').map(n => n[0]).join('')}
-              </span>
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                <span className="text-primary-foreground font-semibold text-sm">
+                  {getInitials(user.name)}
+                </span>
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-background rounded-full flex items-center justify-center border-2 border-background">
+                <RoleIcon className="w-3 h-3 text-muted-foreground" />
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">{user.name}</h3>
-              <p className="text-sm text-gray-600">{user.email}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                {user.name}
+              </h3>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Mail className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{user.email}</span>
+              </div>
             </div>
           </div>
-          <Badge className={getStatusColor(user.status)}>
+          <Badge className={getStatusColor(user.status)} variant="secondary">
             {user.status}
           </Badge>
         </div>
         
-        <div className="grid grid-cols-1 gap-4 mb-4">
+        {/* Role and Status Controls */}
+        <div className="space-y-4 mb-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">Role</span>
+            <span className="text-sm font-medium text-muted-foreground">Role</span>
             <Select 
               value={user.role} 
               onValueChange={(value) => onRoleChange(user, value)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-32 h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="lecturer">Lecturer</SelectItem>
                 <SelectItem value="maintenance">Maintenance</SelectItem>
               </SelectContent>
@@ -94,12 +130,12 @@ export const UserCard = ({ user, onEdit, onDelete, onStatusChange, onRoleChange 
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">Status</span>
+            <span className="text-sm font-medium text-muted-foreground">Status</span>
             <Select 
               value={user.status} 
               onValueChange={(value) => onStatusChange(user, value)}
             >
-              <SelectTrigger className="w-24">
+              <SelectTrigger className="w-24 h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -108,19 +144,27 @@ export const UserCard = ({ user, onEdit, onDelete, onStatusChange, onRoleChange 
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Last Login</p>
-            <p className="text-sm font-medium">{formatDate(user.last_login || '')}</p>
+        {/* Last Login Info */}
+        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg mb-4">
+          <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground">Last Login</p>
+            <p className="text-sm font-medium text-foreground truncate">
+              {formatDate(user.last_login || '')}
+            </p>
           </div>
         </div>
         
+        {/* Action Buttons */}
         <div className="flex gap-2">
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1"
+            className="flex-1 hover:bg-primary hover:text-primary-foreground transition-colors"
             onClick={() => onEdit(user)}
+            aria-label={`Edit ${user.name}`}
           >
             <Edit className="w-3 h-3 mr-1" />
             Edit
@@ -128,8 +172,9 @@ export const UserCard = ({ user, onEdit, onDelete, onStatusChange, onRoleChange 
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1 text-red-600 hover:text-red-700"
+            className="flex-1 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
             onClick={() => onDelete(user)}
+            aria-label={`Delete ${user.name}`}
           >
             <Trash2 className="w-3 h-3 mr-1" />
             Delete
