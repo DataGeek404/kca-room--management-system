@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,7 +86,7 @@ export const UserManagement = () => {
 
   const handleStatusChange = async (user: User, newStatus: string) => {
     try {
-      await updateUserStatus(user.id, newStatus);
+      await updateUserStatus(user.id, newStatus as 'active' | 'inactive');
       toast({
         title: "Success",
         description: "User status updated successfully"
@@ -104,7 +103,7 @@ export const UserManagement = () => {
 
   const handleRoleChange = async (user: User, newRole: string) => {
     try {
-      await updateUserRole(user.id, newRole);
+      await updateUserRole(user.id, newRole as 'admin' | 'lecturer' | 'maintenance');
       toast({
         title: "Success",
         description: "User role updated successfully"
