@@ -30,7 +30,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 interface AppSidebarProps {
   user: User;
@@ -42,7 +43,13 @@ interface AppSidebarProps {
 export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSidebarProps) => {
   const { state, toggleSidebar } = useSidebar();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const location = useLocation();
   const isCollapsed = state === "collapsed";
+
+  // Auto-close mobile menu on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [location.pathname]);
 
   const getMenuItems = () => {
     const baseItems = [
@@ -90,7 +97,11 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
 
   const handleMenuClick = (itemId: string) => {
     setActiveView(itemId);
-    setIsMobileOpen(false);
+    setIsMobileOpen(false); // Always close mobile menu on navigation
+  };
+
+  const handleMobileToggle = () => {
+    setIsMobileOpen(!isMobileOpen);
   };
 
   return (
@@ -100,7 +111,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         variant="ghost"
         size="sm"
         className="fixed top-4 left-4 z-50 lg:hidden bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:bg-gray-50 transition-all duration-200 rounded-lg"
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        onClick={handleMobileToggle}
       >
         {isMobileOpen ? <X className="h-5 w-5 text-gray-700" /> : <Menu className="h-5 w-5 text-gray-700" />}
       </Button>
@@ -113,20 +124,20 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         />
       )}
 
-      {/* Sidebar - Fixed positioning */}
+      {/* Sidebar - Fixed positioning with responsive behavior */}
       <div className={cn(
         "fixed top-0 left-0 h-screen bg-white border-r border-gray-200 shadow-xl z-40 transition-all duration-300 ease-in-out flex flex-col",
         // Mobile: Transform based on state
-        isMobileOpen ? "translate-x-0 w-80" : "-translate-x-full w-80",
-        // Desktop: Always visible with proper width
-        "lg:translate-x-0",
+        "lg:translate-x-0", // Always visible on desktop
+        isMobileOpen ? "translate-x-0 w-80" : "-translate-x-full w-80 lg:translate-x-0", // Mobile toggle
+        // Desktop: Responsive width
         isCollapsed ? "lg:w-16" : "lg:w-64"
       )}>
         
         {/* Header */}
         <div className="border-b border-gray-200 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className={cn("flex items-center gap-3 transition-all duration-300", isCollapsed && !isMobileOpen && "justify-center")}>
+            <div className={cn("flex items-center gap-3 transition-all duration-300", isCollapsed && !isMobileOpen && "lg:justify-center")}>
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 p-2.5 shadow-lg">
                 <img 
                   src="/lovable-uploads/7058a8d7-bb65-444c-99ce-78b033e0b8e0.png" 
@@ -141,6 +152,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                 </div>
               )}
             </div>
+            {/* Desktop toggle button */}
             {(!isCollapsed || isMobileOpen) && (
               <Button
                 variant="ghost"
@@ -157,7 +169,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         {/* Content */}
         <div className="flex-1 px-3 py-4 bg-white overflow-y-auto">
           <div className="mb-6">
-            <div className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "sr-only")}>
+            <div className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "lg:sr-only")}>
               Navigation
             </div>
             <div className="space-y-1">
@@ -171,7 +183,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                     activeView === item.id 
                       ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border-blue-200 font-semibold" 
                       : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                    (isCollapsed && !isMobileOpen) ? "justify-center px-2" : "justify-start"
+                    (isCollapsed && !isMobileOpen) ? "lg:justify-center lg:px-2" : "justify-start"
                   )}
                 >
                   <item.icon 
@@ -193,7 +205,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
           </div>
 
           <div className="mt-6">
-            <div className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "sr-only")}>
+            <div className={cn("px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2", (isCollapsed && !isMobileOpen) && "lg:sr-only")}>
               Account
             </div>
             <button
@@ -204,7 +216,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                 activeView === "settings" 
                   ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border-blue-200 font-semibold" 
                   : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                (isCollapsed && !isMobileOpen) ? "justify-center px-2" : "justify-start"
+                (isCollapsed && !isMobileOpen) ? "lg:justify-center lg:px-2" : "justify-start"
               )}
             >
               <Settings className={cn(
@@ -275,6 +287,12 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
           )}
         </div>
       </div>
+
+      {/* Main content spacer for desktop */}
+      <div className={cn(
+        "hidden lg:block flex-shrink-0 transition-all duration-300",
+        isCollapsed ? "lg:w-16" : "lg:w-64"
+      )} />
     </>
   );
 };

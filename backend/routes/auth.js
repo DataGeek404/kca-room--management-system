@@ -2,174 +2,190 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
-const { validateRegister, validateLogin } = require('../middleware/validation');
+const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
 
 /**
- * @swagger
- * /api/auth/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *               - role
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               role:
- *                 type: string
- *                 enum: [admin, lecturer, maintenance]
+ * @route   POST /api/auth/register
+ * @desc    Register a new user
+ * @access  Public
  */
-router.post('/register', validateRegister, async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    // Check if user already exists
-    const [existingUsers] = await pool.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
-
-    if (existingUsers.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email'
-      });
+router.post(
+  '/register',
+  [
+    body('name', 'Name is required').not().isEmpty(),
+    body('email', 'Please include a valid email').isEmail(),
+    body('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
+    body('role', 'Role is required').not().isEmpty()
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const { name, email, password, role } = req.body;
 
-    // Insert new user
-    const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, NOW())',
-      [name, email, hashedPassword, role]
-    );
+    try {
+      // Check if user exists
+      let [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: result.insertId, email, role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      data: {
-        user: {
-          id: result.insertId,
-          name,
-          email,
-          role
-        },
-        token
+      if (users.length > 0) {
+        return res.status(400).json({ success: false, message: 'User already exists' });
       }
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Registration failed'
-    });
+
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      // Insert user into database
+      const [result] = await pool.execute(
+        'INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, ?, ?)',
+        [name, email, hashedPassword, role, 'active']
+      );
+
+      const userId = result.insertId;
+
+      // Generate JWT
+      const payload = {
+        user: {
+          id: userId
+        }
+      };
+
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: '12h' },
+        (err, token) => {
+          if (err) throw err;
+          res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            data: {
+              user: {
+                id: userId,
+                name: name,
+                email: email,
+                role: role
+              },
+              token: token
+            }
+          });
+        }
+      );
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
   }
-});
+);
 
 /**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login user
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
+ * @route   POST /api/auth/login
+ * @desc    Login user and return JWT
+ * @access  Public
  */
-router.post('/login', validateLogin, async (req, res) => {
-  try {
+router.post(
+  '/login',
+  [
+    body('email', 'Please include a valid email').isEmail(),
+    body('password', 'Password is required').exists()
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
     const { email, password } = req.body;
 
-    // Find user
+    try {
+      // Check if user exists
+      let [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+
+      if (users.length === 0) {
+        return res.status(400).json({ success: false, message: 'Invalid credentials' });
+      }
+
+      const user = users[0];
+
+      // Check password
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Invalid credentials' });
+      }
+
+      // Generate JWT
+      const payload = {
+        userId: user.id
+      };
+
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: '12h' },
+        (err, token) => {
+          if (err) throw err;
+          res.json({
+            success: true,
+            message: 'Logged in successfully',
+            data: {
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+              },
+              token: token
+            }
+          });
+        }
+      );
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  }
+);
+
+// Add the profile route if it doesn't exist
+router.get('/profile', require('../middleware/auth').authenticateToken, async (req, res) => {
+  try {
+    console.log('Profile request for user:', req.user.id);
+    
     const [users] = await pool.execute(
-      'SELECT id, name, email, password_hash, role FROM users WHERE email = ? AND status = "active"',
-      [email]
+      'SELECT id, name, email, role FROM users WHERE id = ? AND status = "active"',
+      [req.user.id]
     );
 
     if (users.length === 0) {
-      return res.status(401).json({
+      return res.status(404).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'User not found'
       });
     }
 
     const user = users[0];
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    // Update last login
-    await pool.execute(
-      'UPDATE users SET last_login = NOW() WHERE id = ?',
-      [user.id]
-    );
+    console.log('Profile data retrieved:', { id: user.id, role: user.role, name: user.name });
 
     res.json({
       success: true,
-      message: 'Login successful',
+      message: 'Profile retrieved successfully',
       data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        },
-        token
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Profile error:', error);
     res.status(500).json({
       success: false,
-      message: 'Login failed'
+      message: 'Failed to get profile'
     });
   }
 });
