@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,11 +7,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Download, FileText, Table, FileSpreadsheet, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import Swal from "sweetalert2";
 
 interface ReportExporterProps {
   reportType: string;
   data: any[];
   onExport: (format: string, filters: any) => void;
+}
+
+interface Department {
+  id: string;
+  name: string;
 }
 
 export const ReportExporter = ({ reportType, data, onExport }: ReportExporterProps) => {
@@ -25,13 +31,60 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
     floor: "all",
     department: "all"
   });
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  // Load departments dynamically
+  useEffect(() => {
+    // In a real implementation, this would fetch from an API
+    // For now, using mock data that would come from the Department Management
+    const mockDepartments = [
+      { id: "1", name: "Computer Science" },
+      { id: "2", name: "Business" },
+      { id: "3", name: "Engineering" },
+      { id: "4", name: "Arts" }
+    ];
+    setDepartments(mockDepartments);
+  }, []);
+
+  const showSuccessToast = (message: string) => {
+    Swal.fire({
+      title: 'Success!',
+      text: message,
+      icon: 'success',
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+  };
+
+  const showErrorToast = (message: string) => {
+    Swal.fire({
+      title: 'Error!',
+      text: message,
+      icon: 'error',
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+  };
 
   const handleExport = () => {
-    onExport(exportFormat, {
-      dateRange,
-      filters,
-      reportType
-    });
+    try {
+      onExport(exportFormat, {
+        dateRange,
+        filters,
+        reportType
+      });
+      
+      const formatLabel = formatOptions.find(f => f.value === exportFormat)?.label || exportFormat;
+      showSuccessToast(`${formatLabel} export started successfully`);
+    } catch (error) {
+      showErrorToast("Failed to export report. Please try again.");
+    }
   };
 
   const formatOptions = [
@@ -43,7 +96,7 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
           <Download className="h-5 w-5" />
           Export Report
         </CardTitle>
@@ -73,7 +126,7 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
             <label className="text-sm font-medium">Date Range</label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal">
+                <Button variant="outline" className="justify-start text-left font-normal w-full">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange.from && dateRange.to
                     ? `${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`
@@ -90,6 +143,7 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
                     }
                   }}
                   numberOfMonths={2}
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
@@ -147,20 +201,21 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All departments</SelectItem>
-                <SelectItem value="Computer Science">Computer Science</SelectItem>
-                <SelectItem value="Business">Business</SelectItem>
-                <SelectItem value="Engineering">Engineering</SelectItem>
-                <SelectItem value="Arts">Arts</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.name}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t">
           <div className="text-sm text-gray-600">
             {data.length} records available for export
           </div>
-          <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             Export {formatOptions.find(f => f.value === exportFormat)?.label}
           </Button>
