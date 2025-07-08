@@ -25,6 +25,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   initialSlot,
   initialBooking
 }) => {
+  // Calculate default end time (3 hours from start)
+  const getDefaultEndTime = (startTime: string) => {
+    if (!startTime) return '';
+    return moment(startTime).add(3, 'hours').format('YYYY-MM-DDTHH:mm');
+  };
+
   const [formData, setFormData] = useState({
     roomId: initialBooking?.room_id || '',
     title: initialBooking?.title || '',
@@ -44,10 +50,27 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Auto-set end time when start time changes
+  useEffect(() => {
+    if (formData.startTime && !initialBooking && !initialSlot) {
+      const defaultEndTime = getDefaultEndTime(formData.startTime);
+      setFormData(prev => ({
+        ...prev,
+        endTime: defaultEndTime
+      }));
+    }
+  }, [formData.startTime, initialBooking, initialSlot]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.roomId || !formData.title || !formData.startTime || !formData.endTime) {
+      return;
+    }
+
+    // Validate that end time is after start time
+    if (moment(formData.endTime).isSameOrBefore(moment(formData.startTime))) {
+      alert('End time must be after start time');
       return;
     }
 
@@ -63,6 +86,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleStartTimeChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      startTime: value,
+      // Auto-update end time to 3 hours later if not editing existing booking
+      endTime: !initialBooking ? getDefaultEndTime(value) : prev.endTime
     }));
   };
 
@@ -105,7 +137,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             id="startTime"
             type="datetime-local"
             value={formData.startTime}
-            onChange={(e) => handleInputChange('startTime', e.target.value)}
+            onChange={(e) => handleStartTimeChange(e.target.value)}
             required
           />
         </div>
@@ -119,6 +151,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             onChange={(e) => handleInputChange('endTime', e.target.value)}
             required
           />
+          <p className="text-xs text-muted-foreground">
+            Default: 3 hours from start time
+          </p>
         </div>
       </div>
 

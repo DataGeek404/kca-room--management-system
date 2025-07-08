@@ -34,6 +34,11 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
 
   useEffect(() => {
     loadData();
+    
+    // Set up interval to refresh data every 5 minutes to handle automatic cleanup
+    const interval = setInterval(loadData, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
   }, [viewType]);
 
   const loadData = async () => {
@@ -50,12 +55,15 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
       ]);
       
       if (bookingsResponse.success && bookingsResponse.data) {
-        const formattedBookings = bookingsResponse.data.map(booking => ({
-          ...booking,
-          start: new Date(booking.start_time),
-          end: new Date(booking.end_time),
-        }));
-        setBookings(formattedBookings);
+        // Filter out completed bookings and format for calendar
+        const activeBookings = bookingsResponse.data
+          .filter(booking => booking.status !== 'completed')
+          .map(booking => ({
+            ...booking,
+            start: new Date(booking.start_time),
+            end: new Date(booking.end_time),
+          }));
+        setBookings(activeBookings);
       }
       
       if (roomsResponse.success && roomsResponse.data) {
@@ -78,7 +86,12 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
   };
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    // Both admin and regular users can create bookings by selecting slots
+    // Default to 3-hour duration if user just clicks without selecting a range
+    const duration = moment(end).diff(moment(start), 'hours');
+    if (duration < 1) {
+      end = moment(start).add(3, 'hours').toDate();
+    }
+    
     setSelectedSlot({ start, end });
     setIsCreateDialogOpen(true);
   };
@@ -184,8 +197,16 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
   };
 
   const eventStyleGetter = (event: any, start: Date, end: Date, isSelected: boolean) => {
+    const now = moment();
+    const eventStart = moment(start);
+    const eventEnd = moment(end);
+    
     let backgroundColor = 'hsl(var(--primary))';
-    if (event.status === 'pending') {
+    
+    // Check if booking is currently active
+    if (eventStart.isSameOrBefore(now) && eventEnd.isAfter(now)) {
+      backgroundColor = 'hsl(142, 76%, 36%)'; // Active green
+    } else if (event.status === 'pending') {
       backgroundColor = 'hsl(var(--warning))';
     } else if (event.status === 'cancelled') {
       backgroundColor = 'hsl(var(--destructive))';
@@ -217,6 +238,11 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
     return 1;
   };
 
+  const isBookingEditable = (booking: Booking) => {
+    // Can only edit future bookings
+    return moment(booking.start_time).isAfter(moment());
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
@@ -225,6 +251,8 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
         </h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }}></div>
+            <span>Active</span>
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--primary))' }}></div>
             <span>Confirmed</span>
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--warning))' }}></div>
@@ -260,6 +288,9 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
             selectable={true}
             eventPropGetter={eventStyleGetter}
             className="rbc-calendar-custom"
+            step={60}
+            showMultiDayTimes
+            defaultView="week"
           />
         </div>
       )}
@@ -295,6 +326,10 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
                   <p className="text-sm">{moment(selectedEvent.end_time).format('MMMM Do YYYY, h:mm a')}</p>
                 </div>
                 <div>
+                  <span className="text-sm font-medium text-muted-foreground">Duration:</span>
+                  <p className="text-sm">{moment(selectedEvent.end_time).diff(moment(selectedEvent.start_time), 'hours')} hours</p>
+                </div>
+                <div>
                   <span className="text-sm font-medium text-muted-foreground">Status:</span>
                   <p className={`text-sm font-medium capitalize ${
                     selectedEvent.status === 'confirmed' ? 'text-green-600' :
@@ -315,7 +350,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
                 <Button variant="outline" onClick={handleCloseDialog}>
                   Close
                 </Button>
-                {canEditBooking(selectedEvent) && (
+                {canEditBooking(selectedEvent) && isBookingEditable(selectedEvent) && (
                   <>
                     <Button variant="secondary" onClick={handleEditBooking} className="gap-2">
                       <Edit className="w-4 h-4" />
@@ -370,15 +405,27 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, user
             <DialogTitle className="text-xl font-semibold">Edit Booking</DialogTitle>
           </DialogHeader>
           {editingBooking && (
-            <AdminBookingForm
-              rooms={rooms}
-              onSubmit={handleUpdateBooking}
-              onCancel={() => {
-                setIsEditDialogOpen(false);
-                setEditingBooking(null);
-              }}
-              initialBooking={editingBooking}
-            />
+            viewType === "admin" ? (
+              <AdminBookingForm
+                rooms={rooms}
+                onSubmit={handleUpdateBooking}
+                onCancel={() => {
+                  setIsEditDialogOpen(false);
+                  setEditingBooking(null);
+                }}
+                initialBooking={editingBooking}
+              />
+            ) : (
+              <BookingForm
+                rooms={rooms}
+                onSubmit={handleUpdateBooking}
+                onCancel={() => {
+                  setIsEditDialogOpen(false);
+                  setEditingBooking(null);
+                }}
+                initialBooking={editingBooking}
+              />
+            )
           )}
         </DialogContent>
       </Dialog>

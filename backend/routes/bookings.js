@@ -1,3 +1,4 @@
+
 const express = require('express');
 const pool = require('../config/database');
 const { authenticateToken, authorize } = require('../middleware/auth');
@@ -67,6 +68,19 @@ const router = express.Router();
  *           format: date-time
  */
 
+// Helper function to clean up expired bookings
+const cleanupExpiredBookings = async () => {
+  try {
+    await pool.execute(
+      `UPDATE bookings 
+       SET status = 'completed', updated_at = NOW() 
+       WHERE status = 'confirmed' AND end_time < NOW()`
+    );
+  } catch (error) {
+    console.error('Error cleaning up expired bookings:', error);
+  }
+};
+
 /**
  * @swagger
  * /api/bookings/my-bookings:
@@ -92,11 +106,14 @@ const router = express.Router();
  */
 router.get('/my-bookings', authenticateToken, async (req, res) => {
   try {
+    // Clean up expired bookings first
+    await cleanupExpiredBookings();
+    
     const [bookings] = await pool.execute(
       `SELECT b.*, r.name as room_name, r.building, r.floor 
        FROM bookings b 
        JOIN rooms r ON b.room_id = r.id 
-       WHERE b.user_id = ? 
+       WHERE b.user_id = ? AND b.status != 'completed'
        ORDER BY b.start_time DESC`,
       [req.user.id]
     );
@@ -140,6 +157,9 @@ router.get('/my-bookings', authenticateToken, async (req, res) => {
  */
 router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
   try {
+    // Clean up expired bookings first
+    await cleanupExpiredBookings();
+    
     const { status, room_id } = req.query;
     
     let query = `
@@ -147,7 +167,7 @@ router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
       FROM bookings b 
       JOIN rooms r ON b.room_id = r.id 
       JOIN users u ON b.user_id = u.id 
-      WHERE 1=1
+      WHERE b.status != 'completed'
     `;
     const params = [];
 
@@ -221,10 +241,13 @@ router.post('/', authenticateToken, validateBooking, async (req, res) => {
   try {
     const { roomId, title, startTime, endTime, recurring, description } = req.body;
 
-    // Check room availability
+    // Clean up expired bookings first
+    await cleanupExpiredBookings();
+
+    // Check room availability (exclude completed and cancelled bookings)
     const [conflicts] = await pool.execute(
       `SELECT id FROM bookings 
-       WHERE room_id = ? AND status = 'confirmed' 
+       WHERE room_id = ? AND status IN ('confirmed', 'pending') 
        AND NOT (end_time <= ? OR start_time >= ?)`,
       [roomId, startTime, endTime]
     );
@@ -341,10 +364,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    // Check room availability (excluding current booking)
+    // Clean up expired bookings first
+    await cleanupExpiredBookings();
+
+    // Check room availability (excluding current booking and completed/cancelled bookings)
     const [conflicts] = await pool.execute(
       `SELECT id FROM bookings 
-       WHERE room_id = ? AND status = 'confirmed' AND id != ?
+       WHERE room_id = ? AND status IN ('confirmed', 'pending') AND id != ?
        AND NOT (end_time <= ? OR start_time >= ?)`,
       [roomId, id, startTime, endTime]
     );

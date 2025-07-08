@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { getMyBookings, cancelBooking, Booking } from "@/services/bookingService";
 import { Calendar, Clock, MapPin } from "lucide-react";
+import moment from 'moment';
 
 export const MyBookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -18,7 +19,11 @@ export const MyBookings = () => {
       setLoading(true);
       const response = await getMyBookings();
       if (response.success && response.data) {
-        setBookings(response.data);
+        // Filter out completed bookings on frontend as well
+        const activeBookings = response.data.filter(booking => 
+          booking.status !== 'completed' || moment(booking.end_time).isAfter(moment())
+        );
+        setBookings(activeBookings);
       }
     } catch (error) {
       toast({
@@ -33,6 +38,11 @@ export const MyBookings = () => {
 
   useEffect(() => {
     loadBookings();
+    
+    // Set up interval to refresh bookings every 5 minutes to handle automatic cleanup
+    const interval = setInterval(loadBookings, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleCancelBooking = async (booking: Booking) => {
@@ -62,30 +72,55 @@ export const MyBookings = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'completed':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
   const filterBookings = (status?: string) => {
+    const now = moment();
+    
     if (!status) return bookings;
     if (status === 'active') {
-      return bookings.filter(b => ['confirmed', 'pending'].includes(b.status));
+      return bookings.filter(b => 
+        ['confirmed', 'pending'].includes(b.status) && 
+        moment(b.end_time).isAfter(now)
+      );
+    }
+    if (status === 'upcoming') {
+      return bookings.filter(b => 
+        b.status === 'confirmed' && 
+        moment(b.start_time).isAfter(now)
+      );
+    }
+    if (status === 'current') {
+      return bookings.filter(b => 
+        b.status === 'confirmed' && 
+        moment(b.start_time).isSameOrBefore(now) && 
+        moment(b.end_time).isAfter(now)
+      );
     }
     return bookings.filter(b => b.status === status);
   };
 
   const getStats = () => {
+    const now = moment();
     const confirmed = bookings.filter(b => b.status === 'confirmed').length;
     const pending = bookings.filter(b => b.status === 'pending').length;
     const cancelled = bookings.filter(b => b.status === 'cancelled').length;
-    const recurring = bookings.filter(b => b.recurring).length;
+    const current = bookings.filter(b => 
+      b.status === 'confirmed' && 
+      moment(b.start_time).isSameOrBefore(now) && 
+      moment(b.end_time).isAfter(now)
+    ).length;
 
     return {
       confirmed,
       pending,
       cancelled,
-      recurring
+      current
     };
   };
 
@@ -106,12 +141,20 @@ export const MyBookings = () => {
     };
   };
 
+  const isBookingActive = (booking: Booking) => {
+    const now = moment();
+    return moment(booking.start_time).isSameOrBefore(now) && 
+           moment(booking.end_time).isAfter(now);
+  };
+
   const BookingCard = ({ booking }: { booking: Booking }) => {
     const startDateTime = formatDateTime(booking.start_time);
     const endDateTime = formatDateTime(booking.end_time);
+    const isActive = isBookingActive(booking);
+    const duration = moment(booking.end_time).diff(moment(booking.start_time), 'hours');
 
     return (
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className={`hover:shadow-md transition-shadow ${isActive ? 'ring-2 ring-blue-500' : ''}`}>
         <CardContent className="p-4">
           <div className="flex justify-between items-start mb-3">
             <div>
@@ -125,6 +168,11 @@ export const MyBookings = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {isActive && (
+                <Badge variant="default" className="text-xs bg-blue-100 text-blue-800">
+                  Active Now
+                </Badge>
+              )}
               {booking.recurring && (
                 <Badge variant="secondary" className="text-xs">
                   Recurring
@@ -146,6 +194,7 @@ export const MyBookings = () => {
               <span className="font-medium">
                 {startDateTime.time} - {endDateTime.time}
               </span>
+              <span className="text-gray-400">({duration}h duration)</span>
             </div>
             {booking.description && (
               <div className="text-sm text-gray-600 mt-2">
@@ -155,7 +204,8 @@ export const MyBookings = () => {
           </div>
           
           <div className="flex gap-2">
-            {booking.status === 'confirmed' && (
+            {['confirmed', 'pending'].includes(booking.status) && 
+             moment(booking.start_time).isAfter(moment()) && (
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -163,16 +213,6 @@ export const MyBookings = () => {
                 onClick={() => handleCancelBooking(booking)}
               >
                 Cancel
-              </Button>
-            )}
-            {booking.status === 'pending' && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full text-red-600 hover:text-red-700"
-                onClick={() => handleCancelBooking(booking)}
-              >
-                Cancel Request
               </Button>
             )}
           </div>
@@ -209,6 +249,14 @@ export const MyBookings = () => {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {stats.current}
+            </div>
+            <div className="text-sm text-gray-600">Active Now</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-yellow-600">
               {stats.pending}
             </div>
@@ -223,19 +271,13 @@ export const MyBookings = () => {
             <div className="text-sm text-gray-600">Cancelled</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {stats.recurring}
-            </div>
-            <div className="text-sm text-gray-600">Recurring</div>
-          </CardContent>
-        </Card>
       </div>
 
       <Tabs defaultValue="active" className="space-y-4">
         <TabsList>
           <TabsTrigger value="active">Active Bookings</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="current">Current</TabsTrigger>
           <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
           <TabsTrigger value="all">All Bookings</TabsTrigger>
         </TabsList>
@@ -249,6 +291,34 @@ export const MyBookings = () => {
             ) : (
               <div className="col-span-full text-center py-8 text-gray-500">
                 No active bookings found. Create your first booking!
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="upcoming" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filterBookings('upcoming').length > 0 ? (
+              filterBookings('upcoming').map(booking => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                No upcoming bookings found.
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="current" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filterBookings('current').length > 0 ? (
+              filterBookings('current').map(booking => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                No current bookings found.
               </div>
             )}
           </div>
