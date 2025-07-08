@@ -13,74 +13,51 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-const validateRegistration = [
-  body('name')
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Name must be between 2 and 100 characters'),
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters'),
-  body('role')
-    .isIn(['admin', 'lecturer', 'maintenance'])
-    .withMessage('Invalid role specified'),
-  handleValidationErrors
-];
-
 const validateLogin = [
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 6 }),
   handleValidationErrors
 ];
 
-const validateRoom = [
-  body('name')
-    .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Room name is required and must be less than 100 characters'),
-  body('capacity')
-    .isInt({ min: 1, max: 1000 })
-    .withMessage('Capacity must be between 1 and 1000'),
-  body('building')
-    .trim()
-    .isLength({ min: 1, max: 50 })
-    .withMessage('Building is required'),
-  body('floor')
-    .isInt({ min: 0, max: 50 })
-    .withMessage('Floor must be between 0 and 50'),
+const validateRegister = [
+  body('name').isLength({ min: 2 }).trim(),
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 6 }),
+  body('role').isIn(['admin', 'lecturer', 'maintenance']),
   handleValidationErrors
 ];
 
 const validateBooking = [
-  body('roomId')
-    .isInt({ min: 1 })
-    .withMessage('Valid room ID is required'),
-  body('title')
-    .trim()
-    .isLength({ min: 1, max: 200 })
-    .withMessage('Title is required and must be less than 200 characters'),
-  body('startTime')
-    .isISO8601()
-    .withMessage('Valid start time is required'),
-  body('endTime')
-    .isISO8601()
-    .withMessage('Valid end time is required'),
+  body('roomId').isInt(),
+  body('title').isLength({ min: 3 }).trim(),
+  body('startTime').isISO8601(),
+  body('endTime').isISO8601(),
+  body('description').optional().trim(),
+  handleValidationErrors
+];
+
+const validateRoom = [
+  body('name').isLength({ min: 2 }).trim(),
+  body('capacity').isInt({ min: 1 }),
+  body('building').isLength({ min: 1 }).trim(),
+  body('floor').isInt({ min: 0 }),
+  body('resources').optional().isArray(),
+  handleValidationErrors
+];
+
+const validateMaintenanceRequest = [
+  body('roomId').isInt(),
+  body('issue').isLength({ min: 5 }).trim(),
+  body('priority').isIn(['low', 'medium', 'high']),
+  body('description').optional().trim(),
   handleValidationErrors
 ];
 
 module.exports = {
-  validateRegistration,
   validateLogin,
-  validateRoom,
+  validateRegister,
   validateBooking,
+  validateRoom,
+  validateMaintenanceRequest,
   handleValidationErrors
 };
