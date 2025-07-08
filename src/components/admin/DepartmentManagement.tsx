@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Plus, Building2, Trash2, Edit } from "lucide-react";
-import Swal from "sweetalert2";
+import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Department {
   id: string;
@@ -24,37 +25,16 @@ export const DepartmentManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "" });
-
-  const showSuccessToast = (message: string) => {
-    Swal.fire({
-      title: 'Success!',
-      text: message,
-      icon: 'success',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true
-    });
-  };
-
-  const showErrorToast = (message: string) => {
-    Swal.fire({
-      title: 'Error!',
-      text: message,
-      icon: 'error',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true
-    });
-  };
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      showErrorToast("Department name is required");
+      toast({
+        title: "Error",
+        description: "Department name is required",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -64,7 +44,10 @@ export const DepartmentManagement = () => {
           ? { ...dept, name: formData.name, description: formData.description }
           : dept
       ));
-      showSuccessToast("Department updated successfully");
+      toast({
+        title: "Success!",
+        description: "Department updated successfully",
+      });
     } else {
       const newDepartment: Department = {
         id: Date.now().toString(),
@@ -73,7 +56,10 @@ export const DepartmentManagement = () => {
         createdAt: new Date().toISOString().split('T')[0]
       };
       setDepartments(prev => [...prev, newDepartment]);
-      showSuccessToast("Department created successfully");
+      toast({
+        title: "Success!",
+        description: "Department created successfully",
+      });
     }
 
     setFormData({ name: "", description: "" });
@@ -87,21 +73,12 @@ export const DepartmentManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (department: Department) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: `You won't be able to revert this! Department "${department.name}" will be deleted.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
+  const handleDelete = (department: Department) => {
+    setDepartments(prev => prev.filter(dept => dept.id !== department.id));
+    toast({
+      title: "Success!",
+      description: "Department deleted successfully",
     });
-
-    if (result.isConfirmed) {
-      setDepartments(prev => prev.filter(dept => dept.id !== department.id));
-      showSuccessToast("Department deleted successfully");
-    }
   };
 
   const resetForm = () => {
@@ -183,15 +160,32 @@ export const DepartmentManagement = () => {
                   <Edit className="h-3 w-3 mr-1" />
                   Edit
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDelete(department)}
-                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        You won't be able to revert this! Department "{department.name}" will be deleted.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(department)} className="bg-red-600 hover:bg-red-700">
+                        Yes, delete it!
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>
