@@ -47,13 +47,13 @@
     --radius: 0.75rem;
 
     /* Enhanced Sidebar Colors */
-    --sidebar-background: 220 30% 8%;
-    --sidebar-foreground: 210 20% 92%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 15%;
     --sidebar-primary: 220 90% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 15%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 220 20% 18%;
+    --sidebar-accent: 210 30% 96%;
+    --sidebar-accent-foreground: 215 25% 15%;
+    --sidebar-border: 210 30% 88%;
     --sidebar-ring: 220 90% 56%;
 
     /* Status Colors - Enhanced */
@@ -65,12 +65,6 @@
     --info-foreground: 0 0% 100%;
     --error: 0 75% 60%;
     --error-foreground: 0 0% 100%;
-
-    /* Gradient Colors */
-    --gradient-primary-start: 220 90% 56%;
-    --gradient-primary-end: 240 80% 70%;
-    --gradient-secondary-start: 142 76% 45%;
-    --gradient-secondary-end: 160 70% 55%;
   }
 
   .dark {
@@ -103,7 +97,7 @@
     --input: 220 25% 18%;
     --ring: 220 90% 60%;
 
-    --sidebar-background: 220 35% 4%;
+    --sidebar-background: 220 30% 8%;
     --sidebar-foreground: 210 20% 85%;
     --sidebar-primary: 220 90% 60%;
     --sidebar-primary-foreground: 220 30% 6%;
@@ -135,17 +129,26 @@
     @apply font-semibold text-foreground;
     line-height: 1.2;
   }
+
+  /* Responsive base styles */
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply overflow-x-hidden;
+  }
 }
 
 /* Enhanced Component Styles */
 @layer components {
   /* Gradient Utilities */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--gradient-primary-start)), hsl(var(--gradient-primary-end)));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(220 80% 70%));
   }
   
   .gradient-secondary {
-    background: linear-gradient(135deg, hsl(var(--gradient-secondary-start)), hsl(var(--gradient-secondary-end)));
+    background: linear-gradient(135deg, hsl(142 76% 45%), hsl(160 70% 55%));
   }
   
   .gradient-card {
@@ -187,7 +190,7 @@
   }
 
   .card-dashboard {
-    @apply card-elevated p-6 rounded-xl backdrop-blur-sm bg-card/95;
+    @apply card-elevated p-4 sm:p-6 rounded-xl backdrop-blur-sm bg-card/95;
   }
 
   /* Button Enhancements */
@@ -199,30 +202,65 @@
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/50 shadow-sm hover:shadow-md transition-all duration-200;
   }
 
-  /* Layout Utilities */
+  /* Responsive Layout Utilities */
   .container-responsive {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8;
   }
 
   .grid-responsive {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6;
+  }
+
+  .grid-responsive-cards {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6;
   }
 
   .flex-responsive {
-    @apply flex flex-col sm:flex-row gap-4 sm:gap-6;
+    @apply flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6;
   }
 
-  /* Typography */
+  /* Typography Responsive */
   .text-heading {
-    @apply text-2xl sm:text-3xl font-bold text-foreground tracking-tight;
+    @apply text-xl sm:text-2xl md:text-3xl font-bold text-foreground tracking-tight;
   }
 
   .text-subheading {
-    @apply text-lg sm:text-xl font-semibold text-foreground/90;
+    @apply text-base sm:text-lg md:text-xl font-semibold text-foreground/90;
   }
 
   .text-body {
     @apply text-sm sm:text-base text-muted-foreground leading-relaxed;
+  }
+
+  .text-caption {
+    @apply text-xs sm:text-sm text-muted-foreground;
+  }
+
+  /* Responsive Padding/Margin */
+  .section-padding {
+    @apply px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8;
+  }
+
+  .content-spacing {
+    @apply space-y-4 sm:space-y-6 md:space-y-8;
+  }
+
+  /* Mobile-first responsive utilities */
+  .mobile-full {
+    @apply w-full sm:w-auto;
+  }
+
+  .mobile-stack {
+    @apply flex-col sm:flex-row;
+  }
+
+  .mobile-center {
+    @apply text-center sm:text-left;
+  }
+
+  /* Touch-friendly sizing */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
   }
 
   /* Animation Classes */
@@ -247,8 +285,33 @@
     @apply block sm:hidden;
   }
 
+  .hide-tablet {
+    @apply hidden md:block;
+  }
+
+  .show-tablet {
+    @apply block md:hidden;
+  }
+
+  .hide-desktop {
+    @apply hidden lg:block;
+  }
+
+  .show-desktop {
+    @apply block lg:hidden;
+  }
+
+  /* Responsive text sizing */
   .responsive-text {
-    @apply text-sm sm:text-base lg:text-lg;
+    @apply text-sm sm:text-base md:text-lg;
+  }
+
+  .responsive-text-sm {
+    @apply text-xs sm:text-sm md:text-base;
+  }
+
+  .responsive-text-lg {
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl;
   }
 }
 
@@ -286,7 +349,7 @@
   }
 }
 
-/* Scrollbar Styling */
+/* Enhanced Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -303,4 +366,75 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  .container-responsive {
+    @apply px-3;
+  }
+  
+  .card-dashboard {
+    @apply p-3 rounded-lg;
+  }
+  
+  .section-padding {
+    @apply px-3 py-3;
+  }
+}
+
+/* Tablet-specific optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .grid-responsive {
+    @apply grid-cols-2 gap-4;
+  }
+}
+
+/* Desktop-specific optimizations */
+@media (min-width: 1025px) {
+  .grid-responsive {
+    @apply grid-cols-3 xl:grid-cols-4 gap-6;
+  }
+}
+
+/* Large desktop optimizations */
+@media (min-width: 1536px) {
+  .container-responsive {
+    @apply max-w-[1400px];
+  }
+  
+  .grid-responsive-cards {
+    @apply grid-cols-5;
+  }
+}
+
+/* Print styles */
+@media print {
+  .hide-print {
+    @apply hidden;
+  }
+  
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card-elevated {
+    @apply border-2 border-gray-800;
+  }
+  
+  .btn-primary {
+    @apply border-2 border-primary;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in {
+    animation: none;
+  }
 }
