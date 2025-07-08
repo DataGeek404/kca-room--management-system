@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { User, LoginCredentials } from "@/types/auth";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface LoginFormProps {
   onLogin: (user: User) => void;
@@ -108,8 +109,14 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
             </Button>
           </form>
           
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <p className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+                Register here
+              </Link>
+            </p>
+            <p className="text-xs text-gray-500">
               Forgot your password? Contact IT support
             </p>
           </div>
