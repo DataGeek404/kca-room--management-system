@@ -57,7 +57,7 @@ const Index = () => {
     return <LoginForm onLogin={handleLogin} />;
   }
 
-  return <Dashboard user={currentUser} onLogout={handleLogout} />;
+  return <Dashboard user={currentUser} />;
 };
 
 export default Index;
