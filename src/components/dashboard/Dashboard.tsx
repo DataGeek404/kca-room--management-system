@@ -39,6 +39,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
           { id: "users", label: "Users", icon: Users },
           { id: "rooms", label: "Rooms", icon: Building },
           { id: "maintenance", label: "Maintenance", icon: Wrench },
+          { id: "departments", label: "Departments", icon: Building2 },
           ...baseTabs.slice(1)
         ];
       case 'lecturer':
@@ -46,6 +47,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
           ...baseTabs.slice(0, 1),
           { id: "bookings", label: "My Bookings", icon: Calendar },
           { id: "rooms", label: "Browse Rooms", icon: Building },
+          { id: "reports", label: "My Reports", icon: FileText },
           ...baseTabs.slice(1)
         ];
       case 'maintenance':
@@ -86,6 +88,30 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
           return <MaintenanceDashboard activeView="dashboard" />;
         }
         return <div>Dashboard content for {user.role}</div>;
+      
+      case "bookings":
+        if (user.role === 'lecturer') {
+          return <LecturerDashboard activeView="bookings" />;
+        }
+        break;
+        
+      case "rooms":
+        if (user.role === 'lecturer') {
+          return <LecturerDashboard activeView="rooms" />;
+        }
+        break;
+        
+      case "reports":
+        if (user.role === 'lecturer') {
+          return <LecturerDashboard activeView="reports" />;
+        }
+        break;
+        
+      case "departments":
+        if (user.role === 'admin') {
+          return <AdminDashboard activeView="departments" />;
+        }
+        break;
       
       case "settings":
         return <UserSettings />;

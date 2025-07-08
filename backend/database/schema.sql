@@ -1,8 +1,17 @@
-
 -- KCA Room Management System Database Schema
 CREATE DATABASE kca_room_management;
 USE kca_room_management;
 -- Drop existing tables if they exist
+
+-- Departments table
+CREATE TABLE IF NOT EXISTS departments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+);
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
@@ -15,12 +24,15 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(20) NULL,
     bio TEXT NULL,
     avatar VARCHAR(255) NULL,
+    department_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL,
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
     INDEX idx_email (email),
     INDEX idx_role (role),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+    INDEX idx_department (department_id)
 );
 
 -- Rooms table
@@ -100,6 +112,14 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     INDEX idx_table (table_name),
     INDEX idx_created_at (created_at)
 );
+
+-- Insert sample departments
+INSERT IGNORE INTO departments (name, description) VALUES 
+('Computer Science', 'Information Technology and Software Development'),
+('Business Administration', 'Business and Management Studies'),
+('Engineering', 'Mechanical and Civil Engineering'),
+('Arts & Design', 'Fine Arts and Creative Design'),
+('Mathematics', 'Mathematics and Statistics');
 
 -- Insert default admin user (password: admin123)
 INSERT IGNORE INTO users (name, email, password_hash, role) VALUES 

@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -94,13 +93,14 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/rooms', roomRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/maintenance', maintenanceRoutes);
-app.use('/api/users', authenticateToken, userRoutes);
-app.use('/api/reports', authenticateToken, reportRoutes);
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/rooms', require('./routes/rooms'));
+app.use('/api/bookings', require('./routes/bookings'));
+app.use('/api/maintenance', require('./routes/maintenance'));
+app.use('/api/reports', require('./routes/reports'));
+app.use('/api/departments', require('./routes/departments'));
 
 // 404 handler
 app.use('*', (req, res) => {
