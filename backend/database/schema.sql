@@ -22,11 +22,23 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_status (status)
 );
 
--- Add missing columns if they don't exist (for existing installations)
-ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS phone VARCHAR(20) NULL,
-ADD COLUMN IF NOT EXISTS bio TEXT NULL,
-ADD COLUMN IF NOT EXISTS avatar VARCHAR(255) NULL;
+-- Departments table
+CREATE TABLE IF NOT EXISTS departments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    code VARCHAR(10) NOT NULL UNIQUE,
+    description TEXT,
+    head_of_department VARCHAR(100),
+    contact_email VARCHAR(255),
+    contact_phone VARCHAR(20),
+    building VARCHAR(50),
+    floor INT,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_code (code),
+    INDEX idx_status (status)
+);
 
 -- Rooms table
 CREATE TABLE IF NOT EXISTS rooms (
@@ -35,14 +47,17 @@ CREATE TABLE IF NOT EXISTS rooms (
     capacity INT NOT NULL,
     building VARCHAR(50) NOT NULL,
     floor INT NOT NULL,
+    department_id INT,
     resources JSON,
     description TEXT,
     status ENUM('available', 'maintenance', 'occupied') DEFAULT 'available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
     INDEX idx_building_floor (building, floor),
     INDEX idx_capacity (capacity),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+    INDEX idx_department (department_id)
 );
 
 -- Bookings table
@@ -110,10 +125,17 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 INSERT IGNORE INTO users (name, email, password_hash, role) VALUES 
 ('System Administrator', 'admin@kca.ac.ke', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj2Q3jHtJrHK', 'admin');
 
+-- Insert sample departments
+INSERT IGNORE INTO departments (name, code, description, head_of_department, contact_email, building, floor) VALUES 
+('Computer Science', 'CS', 'Department of Computer Science and Information Technology', 'Dr. Jane Smith', 'cs@kca.ac.ke', 'IT Building', 1),
+('Business Administration', 'BA', 'Department of Business Administration and Management', 'Prof. John Doe', 'business@kca.ac.ke', 'Business Block', 2),
+('Engineering', 'ENG', 'Department of Engineering and Applied Sciences', 'Dr. Mary Johnson', 'engineering@kca.ac.ke', 'Engineering Block', 1),
+('Liberal Arts', 'LA', 'Department of Liberal Arts and Social Sciences', 'Dr. Robert Brown', 'liberalarts@kca.ac.ke', 'Main Building', 3);
+
 -- Insert sample rooms
-INSERT IGNORE INTO rooms (name, capacity, building, floor, resources, description) VALUES 
-('Lecture Hall A', 150, 'Main Building', 1, '["projector", "microphone", "whiteboard"]', 'Large lecture hall with modern AV equipment'),
-('Computer Lab 1', 40, 'IT Building', 2, '["computers", "projector", "air_conditioning"]', 'Computer laboratory with 40 workstations'),
-('Conference Room', 20, 'Admin Block', 3, '["projector", "video_conferencing", "whiteboard"]', 'Executive conference room'),
-('Tutorial Room 1', 25, 'Academic Block', 1, '["whiteboard", "chairs"]', 'Small tutorial room for group discussions'),
-('Library Study Room', 12, 'Library', 2, '["whiteboard", "quiet_zone"]', 'Quiet study room in the library');
+INSERT IGNORE INTO rooms (name, capacity, building, floor, department_id, resources, description) VALUES 
+('Lecture Hall A', 150, 'Main Building', 1, 1, '["projector", "microphone", "whiteboard"]', 'Large lecture hall with modern AV equipment'),
+('Computer Lab 1', 40, 'IT Building', 2, 1, '["computers", "projector", "air_conditioning"]', 'Computer laboratory with 40 workstations'),
+('Conference Room', 20, 'Admin Block', 3, 2, '["projector", "video_conferencing", "whiteboard"]', 'Executive conference room'),
+('Tutorial Room 1', 25, 'Academic Block', 1, 3, '["whiteboard", "chairs"]', 'Small tutorial room for group discussions'),
+('Library Study Room', 12, 'Library', 2, 4, '["whiteboard", "quiet_zone"]', 'Quiet study room in the library');

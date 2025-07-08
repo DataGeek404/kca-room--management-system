@@ -15,6 +15,7 @@ const bookingRoutes = require('./routes/bookings');
 const maintenanceRoutes = require('./routes/maintenance');
 const userRoutes = require('./routes/users');
 const reportRoutes = require('./routes/reports');
+const departmentRoutes = require('./routes/departments');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -101,6 +102,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/users', authenticateToken, userRoutes);
 app.use('/api/reports', authenticateToken, reportRoutes);
+app.use('/api/departments', departmentRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
