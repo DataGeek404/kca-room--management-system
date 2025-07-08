@@ -57,6 +57,33 @@ export const getMyBookings = async (): Promise<ApiResponse<Booking[]>> => {
   return response.json();
 };
 
+export const getAllBookings = async (params?: {
+  status?: string;
+  room_id?: number;
+}): Promise<ApiResponse<Booking[]>> => {
+  const queryParams = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+  }
+
+  const url = `${API_BASE_URL}/bookings${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  
+  const response = await fetch(url, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to fetch bookings');
+  }
+
+  return response.json();
+};
+
 export const createBooking = async (bookingData: CreateBookingData): Promise<ApiResponse<Booking>> => {
   const response = await fetch(`${API_BASE_URL}/bookings`, {
     method: 'POST',

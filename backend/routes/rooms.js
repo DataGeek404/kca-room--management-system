@@ -6,7 +6,103 @@ const { validateRoom } = require('../middleware/validation');
 
 const router = express.Router();
 
-// Get all rooms with optional filters
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Room:
+ *       type: object
+ *       required:
+ *         - name
+ *         - capacity
+ *         - building
+ *         - floor
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-generated id of the room
+ *         name:
+ *           type: string
+ *           description: The room name/number
+ *         capacity:
+ *           type: integer
+ *           description: Maximum number of people
+ *         building:
+ *           type: string
+ *           description: Building name
+ *         floor:
+ *           type: integer
+ *           description: Floor number
+ *         resources:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Available resources in the room
+ *         description:
+ *           type: string
+ *           description: Room description
+ *         status:
+ *           type: string
+ *           enum: [available, maintenance, occupied]
+ *           description: Current room status
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/rooms:
+ *   get:
+ *     summary: Get all rooms with optional filters
+ *     tags: [Rooms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: building
+ *         schema:
+ *           type: string
+ *         description: Filter by building
+ *       - in: query
+ *         name: floor
+ *         schema:
+ *           type: integer
+ *         description: Filter by floor
+ *       - in: query
+ *         name: capacity
+ *         schema:
+ *           type: integer
+ *         description: Minimum capacity required
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [available, maintenance, occupied]
+ *         description: Filter by status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in room name or description
+ *     responses:
+ *       200:
+ *         description: List of rooms
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Room'
+ */
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const { building, floor, capacity, status, search } = req.query;
@@ -45,9 +141,15 @@ router.get('/', authenticateToken, async (req, res) => {
 
     const [rooms] = await pool.execute(query, params);
 
+    // Parse resources JSON
+    const parsedRooms = rooms.map(room => ({
+      ...room,
+      resources: room.resources ? JSON.parse(room.resources) : []
+    }));
+
     res.json({
       success: true,
-      data: rooms
+      data: parsedRooms
     });
   } catch (error) {
     console.error('Get rooms error:', error);
@@ -58,7 +160,55 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Create new room (admin only)
+/**
+ * @swagger
+ * /api/rooms:
+ *   post:
+ *     summary: Create a new room (Admin only)
+ *     tags: [Rooms]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - capacity
+ *               - building
+ *               - floor
+ *             properties:
+ *               name:
+ *                 type: string
+ *               capacity:
+ *                 type: integer
+ *               building:
+ *                 type: string
+ *               floor:
+ *                 type: integer
+ *               resources:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Room created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Room'
+ */
 router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req, res) => {
   try {
     const { name, capacity, building, floor, resources, description } = req.body;
@@ -74,10 +224,16 @@ router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req
       [result.insertId]
     );
 
+    // Parse resources JSON
+    const room = {
+      ...newRoom[0],
+      resources: newRoom[0].resources ? JSON.parse(newRoom[0].resources) : []
+    };
+
     res.status(201).json({
       success: true,
       message: 'Room created successfully',
-      data: newRoom[0]
+      data: room
     });
   } catch (error) {
     console.error('Create room error:', error);
@@ -88,8 +244,50 @@ router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req
   }
 });
 
-// Update room (admin only)
-router.put('/:id', authenticateToken, authorize('admin'), validateRoom, async (req, res) => {
+/**
+ * @swagger
+ * /api/rooms/{id}:
+ *   put:
+ *     summary: Update a room (Admin only)
+ *     tags: [Rooms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Room ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               capacity:
+ *                 type: integer
+ *               building:
+ *                 type: string
+ *               floor:
+ *                 type: integer
+ *               resources:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               description:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [available, maintenance, occupied]
+ *     responses:
+ *       200:
+ *         description: Room updated successfully
+ */
+router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, capacity, building, floor, resources, description, status } = req.body;
@@ -113,10 +311,16 @@ router.put('/:id', authenticateToken, authorize('admin'), validateRoom, async (r
       [id]
     );
 
+    // Parse resources JSON
+    const room = {
+      ...updatedRoom[0],
+      resources: updatedRoom[0].resources ? JSON.parse(updatedRoom[0].resources) : []
+    };
+
     res.json({
       success: true,
       message: 'Room updated successfully',
-      data: updatedRoom[0]
+      data: room
     });
   } catch (error) {
     console.error('Update room error:', error);
@@ -127,7 +331,29 @@ router.put('/:id', authenticateToken, authorize('admin'), validateRoom, async (r
   }
 });
 
-// Delete room (admin only)
+/**
+ * @swagger
+ * /api/rooms/{id}:
+ *   delete:
+ *     summary: Delete a room (Admin only)
+ *     tags: [Rooms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Room ID
+ *     responses:
+ *       200:
+ *         description: Room deleted successfully
+ *       400:
+ *         description: Cannot delete room with active bookings
+ *       404:
+ *         description: Room not found
+ */
 router.delete('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
