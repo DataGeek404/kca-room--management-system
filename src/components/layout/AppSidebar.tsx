@@ -116,8 +116,11 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
       <Sidebar 
         className={cn(
           "border-r bg-white shadow-lg border-gray-100 transition-all duration-300 ease-in-out",
-          "fixed inset-y-0 left-0 z-40 lg:relative lg:z-0",
-          // Mobile styles
+          // Mobile: position fixed to appear on top left
+          "fixed inset-y-0 left-0 z-40",
+          // Desktop: normal positioning  
+          "lg:relative lg:z-0",
+          // Mobile visibility control
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
         collapsible="icon"
