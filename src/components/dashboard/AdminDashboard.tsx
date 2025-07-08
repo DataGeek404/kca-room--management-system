@@ -60,7 +60,10 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -72,7 +75,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       subtitle: `${stats.activeUsers} active users`,
       icon: Users,
       color: "text-blue-600",
-      bgColor: "bg-blue-50 dark:bg-blue-950/30",
+      bgGradient: "from-blue-500/10 to-blue-600/10",
       change: "+12%",
       changeType: "positive" as const
     },
@@ -82,7 +85,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       subtitle: "Across all departments",
       icon: Building,
       color: "text-green-600",
-      bgColor: "bg-green-50 dark:bg-green-950/30",
+      bgGradient: "from-green-500/10 to-green-600/10",
       change: "+3%",
       changeType: "positive" as const
     },
@@ -92,7 +95,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       subtitle: "This month",
       icon: Calendar,
       color: "text-purple-600",
-      bgColor: "bg-purple-50 dark:bg-purple-950/30",
+      bgGradient: "from-purple-500/10 to-purple-600/10",
       change: "+8%",
       changeType: "positive" as const
     },
@@ -102,7 +105,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       subtitle: "Pending requests",
       icon: Wrench,
       color: "text-orange-600",
-      bgColor: "bg-orange-50 dark:bg-orange-950/30",
+      bgGradient: "from-orange-500/10 to-orange-600/10",
       change: "-5%",
       changeType: "negative" as const
     }
@@ -112,23 +115,27 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
     <div className="space-y-8">
       {/* Header Section */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-heading">Admin Dashboard</h1>
-        <p className="text-body">Overview of system statistics and activities</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">Admin Dashboard</h1>
+        <p className="text-sm text-muted-foreground lg:text-base">Overview of system statistics and activities</p>
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid-responsive">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {statCards.map((card, index) => (
-          <Card key={card.title} className="card-elevated animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
+          <Card 
+            key={card.title} 
+            className={`border-0 bg-gradient-to-br ${card.bgGradient} shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg animate-scale-in`} 
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-              <div className={`p-2 rounded-lg ${card.bgColor}`}>
+              <div className={`rounded-lg bg-background/50 p-2 shadow-sm`}>
                 <card.icon className={`h-5 w-5 ${card.color}`} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="text-3xl font-bold text-foreground">{card.value}</div>
+                <div className={`text-3xl font-bold ${card.color}`}>{card.value}</div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">{card.subtitle}</p>
                   <Badge 
@@ -145,31 +152,31 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       </div>
 
       {/* System Health and Activity Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="card-elevated">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="border-0 shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-subheading">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
               <TrendingUp className="h-5 w-5 text-green-600" />
               System Health
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col items-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <Database className="h-6 w-6 text-green-600 mb-2" />
+              <div className="flex flex-col items-center rounded-lg bg-green-50 p-4 text-center">
+                <Database className="mb-2 h-6 w-6 text-green-600" />
                 <span className="text-2xl font-bold text-green-600">99.8%</span>
-                <span className="text-xs text-muted-foreground text-center">Database Uptime</span>
+                <span className="text-xs text-muted-foreground">Database Uptime</span>
               </div>
-              <div className="flex flex-col items-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                <Activity className="h-6 w-6 text-blue-600 mb-2" />
+              <div className="flex flex-col items-center rounded-lg bg-blue-50 p-4 text-center">
+                <Activity className="mb-2 h-6 w-6 text-blue-600" />
                 <span className="text-2xl font-bold text-blue-600">{stats.activeDepartments}</span>
-                <span className="text-xs text-muted-foreground text-center">Active Departments</span>
+                <span className="text-xs text-muted-foreground">Active Departments</span>
               </div>
             </div>
-            <div className="pt-4 border-t border-border/50">
-              <div className="flex justify-between items-center">
+            <div className="border-t border-border/50 pt-4">
+              <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">System Status</span>
-                <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                <Badge variant="default" className="bg-green-50 text-green-700 border-green-200">
                   All Systems Operational
                 </Badge>
               </div>
@@ -177,18 +184,18 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
+        <Card className="border-0 shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-subheading">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
               <AlertTriangle className="h-5 w-5 text-amber-600" />
               Recent Activity
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                <Users className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-3 rounded-lg bg-blue-50 p-3">
+                <Users className="mt-1 h-4 w-4 flex-shrink-0 text-blue-600" />
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground">
                     {stats.totalUsers > 0 ? `${stats.totalUsers} users registered` : 'No users yet'}
                   </p>
@@ -196,9 +203,9 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
                 </div>
               </div>
               
-              <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <Building className="h-4 w-4 text-green-600 mt-1 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-3 rounded-lg bg-green-50 p-3">
+                <Building className="mt-1 h-4 w-4 flex-shrink-0 text-green-600" />
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground">
                     {stats.activeDepartments > 0 ? `${stats.activeDepartments} departments active` : 'No departments yet'}
                   </p>
@@ -206,9 +213,9 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
                 </div>
               </div>
               
-              <div className="flex items-start gap-3 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-                <Activity className="h-4 w-4 text-purple-600 mt-1 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-3 rounded-lg bg-purple-50 p-3">
+                <Activity className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600" />
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground">System monitoring active</p>
                   <p className="text-xs text-muted-foreground">Real-time tracking</p>
                 </div>

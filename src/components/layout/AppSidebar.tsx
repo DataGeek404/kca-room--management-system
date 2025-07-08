@@ -10,7 +10,7 @@ import {
   Wrench,
   Building2,
   LogOut,
-  ChevronLeft
+  ChevronRight
 } from "lucide-react";
 import {
   Sidebar,
@@ -74,38 +74,38 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+        return 'bg-red-50 text-red-700 border-red-200';
       case 'lecturer':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'maintenance':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+        return 'bg-green-50 text-green-700 border-green-200';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
   return (
     <Sidebar 
       className={cn(
-        "border-r border-sidebar-border/50 bg-sidebar/95 backdrop-blur-sm transition-all duration-300",
+        "border-r border-border/50 bg-background/95 backdrop-blur-sm transition-all duration-300",
         isCollapsed && "shadow-lg"
       )}
       collapsible="icon"
     >
-      <SidebarHeader className="p-4 border-b border-sidebar-border/30">
+      <SidebarHeader className="border-b border-border/30 p-4">
         <div className="flex items-center justify-between">
           <div className={cn("flex items-center gap-3 transition-all duration-300", isCollapsed && "justify-center")}>
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl p-2 flex-shrink-0 shadow-md">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary p-2 shadow-md">
               <img 
                 src="/lovable-uploads/7058a8d7-bb65-444c-99ce-78b033e0b8e0.png" 
                 alt="KCA University Logo" 
-                className="w-full h-full object-contain filter brightness-0 invert"
+                className="h-full w-full object-contain brightness-0 invert filter"
               />
             </div>
             {!isCollapsed && (
               <div className="min-w-0 animate-fade-in">
-                <h2 className="font-bold text-sidebar-foreground text-sm truncate">KCA University</h2>
-                <p className="text-xs text-sidebar-foreground/70 truncate">Room Management</p>
+                <h2 className="truncate text-sm font-bold text-foreground">KCA University</h2>
+                <p className="truncate text-xs text-muted-foreground">Room Management</p>
               </div>
             )}
           </div>
@@ -114,9 +114,9 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
               variant="ghost"
               size="sm"
               onClick={toggleSidebar}
-              className="p-2 hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors"
+              className="p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -124,7 +124,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
 
       <SidebarContent className="px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className={cn("px-4 text-sidebar-foreground/60 font-medium", isCollapsed && "sr-only")}>
+          <SidebarGroupLabel className={cn("px-4 font-medium text-muted-foreground", isCollapsed && "sr-only")}>
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-2">
@@ -136,10 +136,10 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                     onClick={() => setActiveView(item.id)}
                     tooltip={isCollapsed ? `${item.label} - ${item.description}` : undefined}
                     className={cn(
-                      "w-full px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                      "group w-full rounded-lg px-3 py-2.5 transition-all duration-200",
                       activeView === item.id 
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md scale-105" 
-                        : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:scale-102",
+                        ? "bg-primary text-primary-foreground shadow-md" 
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
                       isCollapsed ? "justify-center px-2" : "justify-start"
                     )}
                   >
@@ -151,9 +151,9 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                       )} 
                     />
                     {!isCollapsed && (
-                      <div className="flex-1 text-left animate-fade-in">
-                        <span className="block font-medium text-sm truncate">{item.label}</span>
-                        <span className="block text-xs text-sidebar-foreground/60 truncate">{item.description}</span>
+                      <div className="flex-1 animate-fade-in text-left">
+                        <span className="block truncate text-sm font-medium">{item.label}</span>
+                        <span className="block truncate text-xs opacity-70">{item.description}</span>
                       </div>
                     )}
                   </SidebarMenuButton>
@@ -164,7 +164,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         </SidebarGroup>
 
         <SidebarGroup className="mt-4">
-          <SidebarGroupLabel className={cn("px-4 text-sidebar-foreground/60 font-medium", isCollapsed && "sr-only")}>
+          <SidebarGroupLabel className={cn("px-4 font-medium text-muted-foreground", isCollapsed && "sr-only")}>
             Account
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-2">
@@ -175,18 +175,18 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                   onClick={() => setActiveView("settings")}
                   tooltip={isCollapsed ? "Settings - Manage your preferences" : undefined}
                   className={cn(
-                    "w-full px-3 py-2.5 rounded-lg transition-all duration-200",
+                    "w-full rounded-lg px-3 py-2.5 transition-all duration-200",
                     activeView === "settings" 
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
-                      : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80 hover:text-sidebar-foreground",
+                      ? "bg-primary text-primary-foreground shadow-md" 
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
                     isCollapsed ? "justify-center px-2" : "justify-start"
                   )}
                 >
                   <Settings className={cn("h-5 w-5 flex-shrink-0", !isCollapsed && "mr-3")} />
                   {!isCollapsed && (
-                    <div className="flex-1 text-left animate-fade-in">
-                      <span className="block font-medium text-sm">Settings</span>
-                      <span className="block text-xs text-sidebar-foreground/60">Manage preferences</span>
+                    <div className="flex-1 animate-fade-in text-left">
+                      <span className="block text-sm font-medium">Settings</span>
+                      <span className="block text-xs opacity-70">Manage preferences</span>
                     </div>
                   )}
                 </SidebarMenuButton>
@@ -196,20 +196,20 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border/30">
+      <SidebarFooter className="border-t border-border/30 p-4">
         {!isCollapsed ? (
-          <div className="space-y-3 animate-fade-in">
-            <div className="flex items-center gap-3 p-3 bg-sidebar-accent/30 rounded-xl border border-sidebar-border/20">
-              <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-                <span className="text-primary-foreground font-bold text-sm">
+          <div className="animate-fade-in space-y-3">
+            <div className="flex items-center gap-3 rounded-xl border border-border/20 bg-accent/30 p-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary shadow-md">
+                <span className="text-sm font-bold text-primary-foreground">
                   {user.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
                   {user.name}
                 </p>
-                <Badge className={cn("text-xs mt-1", getRoleBadgeColor(user.role))} variant="secondary">
+                <Badge className={cn("mt-1 text-xs border", getRoleBadgeColor(user.role))} variant="outline">
                   {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 </Badge>
               </div>
@@ -219,17 +219,17 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                 variant="outline"
                 size="sm"
                 onClick={onLogout}
-                className="w-full bg-sidebar-accent/20 border-sidebar-border/30 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 transition-all duration-200"
+                className="w-full border-border/30 bg-background/50 text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </Button>
             )}
           </div>
         ) : (
           <div className="flex flex-col items-center space-y-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center shadow-md">
-              <span className="text-primary-foreground font-bold text-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary shadow-md">
+              <span className="text-sm font-bold text-primary-foreground">
                 {user.name.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -238,7 +238,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                 variant="ghost"
                 size="sm"
                 onClick={onLogout}
-                className="p-2 w-10 h-10 hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors"
+                className="h-10 w-10 p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 title="Logout"
               >
                 <LogOut className="h-4 w-4" />

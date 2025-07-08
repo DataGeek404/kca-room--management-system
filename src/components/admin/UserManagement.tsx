@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -174,48 +173,53 @@ export const UserManagement = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-heading">User Management</h1>
-          <p className="text-body">Manage system users and their permissions</p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">User Management</h1>
+          <p className="text-sm text-muted-foreground lg:text-base">Manage system users and their permissions</p>
         </div>
         
         {/* Quick Actions */}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row lg:gap-3">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={loadUsers}
             disabled={loading}
-            className="btn-secondary gap-2"
+            className="gap-2 transition-all hover:scale-105"
             aria-label="Refresh user list"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
           
           <Button 
             variant="outline" 
             size="sm"
-            className="btn-secondary gap-2"
+            className="gap-2 transition-all hover:scale-105"
             aria-label="Export user data"
           >
-            <Download className="w-4 h-4" />
+            <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Export</span>
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="btn-primary gap-2" aria-label="Add new user">
-                <UserPlus className="w-4 h-4" />
+              <Button className="gap-2 bg-primary text-primary-foreground transition-all hover:scale-105 hover:bg-primary/90" aria-label="Add new user">
+                <UserPlus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add User</span>
                 <span className="sm:hidden">Add</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md" aria-describedby="add-user-description">
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-                <DialogDescription id="add-user-description">
+            <DialogContent 
+              className="max-w-md border-0 bg-background shadow-2xl"
+              aria-describedby="add-user-description"
+              onPointerDownOutside={(e) => e.preventDefault()}
+              onInteractOutside={(e) => e.preventDefault()}
+            >
+              <DialogHeader className="space-y-3">
+                <DialogTitle className="text-xl font-semibold text-foreground">Add New User</DialogTitle>
+                <DialogDescription id="add-user-description" className="text-sm text-muted-foreground">
                   Create a new user account with name, email, password, and role
                 </DialogDescription>
               </DialogHeader>
@@ -230,55 +234,55 @@ export const UserManagement = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid-responsive">
-        <Card className="card-elevated">
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <Users className="w-8 h-8 mb-2 text-primary" />
-            <div className="text-3xl font-bold text-primary">{userStats.total}</div>
-            <div className="text-sm text-muted-foreground">Total Users</div>
-            <Badge variant="secondary" className="mt-2">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+        <Card className="border-0 bg-gradient-to-br from-primary/5 to-primary/10 shadow-md transition-all hover:scale-105 hover:shadow-lg">
+          <CardContent className="flex flex-col items-center justify-center p-4 text-center lg:p-6">
+            <Users className="mb-2 h-6 w-6 text-primary lg:h-8 lg:w-8" />
+            <div className="text-2xl font-bold text-primary lg:text-3xl">{userStats.total}</div>
+            <div className="text-xs text-muted-foreground lg:text-sm">Total Users</div>
+            <Badge variant="secondary" className="mt-2 bg-primary/10 text-primary">
               {userStats.active} active
             </Badge>
           </CardContent>
         </Card>
         
-        <Card className="card-elevated">
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <Users className="w-8 h-8 mb-2 text-blue-600" />
-            <div className="text-3xl font-bold text-blue-600">{userStats.lecturers}</div>
-            <div className="text-sm text-muted-foreground">Lecturers</div>
+        <Card className="border-0 bg-gradient-to-br from-blue-500/5 to-blue-500/10 shadow-md transition-all hover:scale-105 hover:shadow-lg">
+          <CardContent className="flex flex-col items-center justify-center p-4 text-center lg:p-6">
+            <Users className="mb-2 h-6 w-6 text-blue-600 lg:h-8 lg:w-8" />
+            <div className="text-2xl font-bold text-blue-600 lg:text-3xl">{userStats.lecturers}</div>
+            <div className="text-xs text-muted-foreground lg:text-sm">Lecturers</div>
           </CardContent>
         </Card>
         
-        <Card className="card-elevated">
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <UserCheck className="w-8 h-8 mb-2 text-purple-600" />
-            <div className="text-3xl font-bold text-purple-600">{userStats.admins}</div>
-            <div className="text-sm text-muted-foreground">Administrators</div>
+        <Card className="border-0 bg-gradient-to-br from-purple-500/5 to-purple-500/10 shadow-md transition-all hover:scale-105 hover:shadow-lg">
+          <CardContent className="flex flex-col items-center justify-center p-4 text-center lg:p-6">
+            <UserCheck className="mb-2 h-6 w-6 text-purple-600 lg:h-8 lg:w-8" />
+            <div className="text-2xl font-bold text-purple-600 lg:text-3xl">{userStats.admins}</div>
+            <div className="text-xs text-muted-foreground lg:text-sm">Administrators</div>
           </CardContent>
         </Card>
         
-        <Card className="card-elevated">
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <Wrench className="w-8 h-8 mb-2 text-orange-600" />
-            <div className="text-3xl font-bold text-orange-600">{userStats.maintenance}</div>
-            <div className="text-sm text-muted-foreground">Maintenance Staff</div>
+        <Card className="border-0 bg-gradient-to-br from-orange-500/5 to-orange-500/10 shadow-md transition-all hover:scale-105 hover:shadow-lg">
+          <CardContent className="flex flex-col items-center justify-center p-4 text-center lg:p-6">
+            <Wrench className="mb-2 h-6 w-6 text-orange-600 lg:h-8 lg:w-8" />
+            <div className="text-2xl font-bold text-orange-600 lg:text-3xl">{userStats.maintenance}</div>
+            <div className="text-xs text-muted-foreground lg:text-sm">Maintenance Staff</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters and Search */}
-      <Card className="card-elevated">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-4 lg:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                 <Input
                   placeholder="Search users by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="border-border/50 bg-background pl-10 transition-all focus:border-primary focus:ring-primary"
                   aria-label="Search users"
                 />
               </div>
@@ -288,7 +292,7 @@ export const UserManagement = () => {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 aria-label="Filter by role"
               >
                 <option value="all">All Roles</option>
@@ -300,7 +304,7 @@ export const UserManagement = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-input rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 aria-label="Filter by status"
               >
                 <option value="all">All Status</option>
@@ -312,7 +316,7 @@ export const UserManagement = () => {
           
           {(searchTerm || roleFilter !== 'all' || statusFilter !== 'all') && (
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="w-4 h-4" />
+              <Filter className="h-4 w-4" />
               <span>
                 Showing {filteredUsers.length} of {users.length} users
               </span>
@@ -325,7 +329,7 @@ export const UserManagement = () => {
                     setRoleFilter('all');
                     setStatusFilter('all');
                   }}
-                  className="h-auto p-0 text-primary underline"
+                  className="h-auto p-0 text-primary underline transition-colors hover:text-primary/80"
                 >
                   Clear filters
                 </Button>
@@ -338,19 +342,19 @@ export const UserManagement = () => {
       {/* Users Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             <p className="text-sm text-muted-foreground">Loading users...</p>
           </div>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <Card className="card-elevated">
+        <Card className="border-0 shadow-md">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Users className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
+            <Users className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold text-foreground">
               {users.length === 0 ? 'No users found' : 'No matching users'}
             </h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="mb-4 text-muted-foreground">
               {users.length === 0 
                 ? 'Get started by creating your first user account.'
                 : 'Try adjusting your search criteria or filters.'
@@ -359,15 +363,20 @@ export const UserManagement = () => {
             {users.length === 0 && (
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="btn-primary gap-2">
-                    <Plus className="w-4 h-4" />
+                  <Button className="gap-2 bg-primary text-primary-foreground transition-all hover:scale-105 hover:bg-primary/90">
+                    <Plus className="h-4 w-4" />
                     Create First User
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md" aria-describedby="add-first-user-description">
-                  <DialogHeader>
-                    <DialogTitle>Create First User</DialogTitle>
-                    <DialogDescription id="add-first-user-description">
+                <DialogContent 
+                  className="max-w-md border-0 bg-background shadow-2xl" 
+                  aria-describedby="add-first-user-description"
+                  onPointerDownOutside={(e) => e.preventDefault()}
+                  onInteractOutside={(e) => e.preventDefault()}
+                >
+                  <DialogHeader className="space-y-3">
+                    <DialogTitle className="text-xl font-semibold text-foreground">Create First User</DialogTitle>
+                    <DialogDescription id="add-first-user-description" className="text-sm text-muted-foreground">
                       Set up the first user account for your system
                     </DialogDescription>
                   </DialogHeader>
@@ -382,7 +391,7 @@ export const UserManagement = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredUsers.map((user) => (
             <UserCard
               key={user.id}
@@ -401,10 +410,15 @@ export const UserManagement = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md" aria-describedby="edit-user-description">
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription id="edit-user-description">
+        <DialogContent 
+          className="max-w-md border-0 bg-background shadow-2xl" 
+          aria-describedby="edit-user-description"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl font-semibold text-foreground">Edit User</DialogTitle>
+            <DialogDescription id="edit-user-description" className="text-sm text-muted-foreground">
               Edit user information including name, email, and role
             </DialogDescription>
           </DialogHeader>

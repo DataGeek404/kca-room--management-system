@@ -94,10 +94,10 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
       
       case "users":
         return user.role === 'admin' ? <UserManagement /> : (
-          <Card className="card-elevated">
+          <Card className="border-0 shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">
-                <Bell className="w-5 h-5" />
+                <Bell className="h-5 w-5" />
                 Access Denied
               </CardTitle>
             </CardHeader>
@@ -111,10 +111,10 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
       
       case "departments":
         return user.role === 'admin' ? <DepartmentManagement /> : (
-          <Card className="card-elevated">
+          <Card className="border-0 shadow-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">
-                <Bell className="w-5 h-5" />
+                <Bell className="h-5 w-5" />
                 Access Denied
               </CardTitle>
             </CardHeader>
@@ -137,7 +137,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
       
       default:
         return (
-          <Card className="card-elevated">
+          <Card className="border-0 shadow-md">
             <CardHeader>
               <CardTitle>Coming Soon</CardTitle>
             </CardHeader>
@@ -153,7 +153,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="flex min-h-screen w-full bg-background">
         <AppSidebar 
           user={user} 
           activeView={activeView} 
@@ -163,12 +163,12 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
         
         <SidebarInset className="flex-1">
           {/* Enhanced Header */}
-          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 bg-background/95 backdrop-blur-sm px-4">
-            <SidebarTrigger className="-ml-1 show-mobile" />
+          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 bg-background/95 px-4 backdrop-blur-sm">
+            <SidebarTrigger className="-ml-1 lg:hidden" />
             
             <div className="flex flex-1 items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="hide-mobile">
+                <div className="hidden lg:block">
                   <h1 className="text-xl font-bold text-foreground">
                     {getPageTitle()}
                   </h1>
@@ -176,7 +176,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
                     {getPageDescription()}
                   </p>
                 </div>
-                <div className="show-mobile">
+                <div className="lg:hidden">
                   <h1 className="text-lg font-semibold text-foreground">
                     {getPageTitle()}
                   </h1>
@@ -186,30 +186,30 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
               <div className="flex items-center gap-2">
                 <ThemeToggle />
                 
-                <Button variant="outline" size="sm" className="gap-2 hide-mobile">
-                  <Bell className="w-4 h-4" />
-                  <span className="hidden lg:inline">Notifications</span>
+                <Button variant="outline" size="sm" className="hidden gap-2 lg:flex">
+                  <Bell className="h-4 w-4" />
+                  <span className="hidden xl:inline">Notifications</span>
                   <Badge variant="destructive" className="ml-1 px-1.5 py-0.5 text-xs">
                     3
                   </Badge>
                 </Button>
                 
-                <div className="flex items-center gap-2 text-sm text-muted-foreground hide-mobile">
-                  <Clock className="w-4 h-4" />
+                <div className="hidden items-center gap-2 text-sm text-muted-foreground lg:flex">
+                  <Clock className="h-4 w-4" />
                   <span className="hidden md:inline">
                     {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 pl-2 border-l border-border/50 hide-mobile">
-                  <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-                    <span className="text-primary-foreground font-semibold text-sm">
+                <div className="hidden items-center gap-2 border-l border-border/50 pl-2 lg:flex">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                    <span className="text-sm font-semibold text-primary-foreground">
                       {user.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="hidden xl:block">
                     <p className="text-sm font-medium text-foreground">{user.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                    <p className="text-xs capitalize text-muted-foreground">{user.role}</p>
                   </div>
                 </div>
               </div>
@@ -218,7 +218,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
 
           {/* Main Content Area */}
           <main className="flex-1 overflow-auto">
-            <div className="container-responsive py-6">
+            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               <div className="animate-fade-in">
                 {renderContent()}
               </div>
