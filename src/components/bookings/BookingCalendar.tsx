@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'react-big-calendar';
 import { momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Booking, getAllBookings, cancelBooking, createBooking } from "@/services/bookingService";
-import { Room, getAllRooms } from "@/services/roomService";
+import { Booking, getAllBookings, cancelBooking, createBooking, updateBooking } from "@/services/bookingService";
+import { Room, getRooms } from "@/services/roomService";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -40,7 +39,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
       setLoading(true);
       const [bookingsResponse, roomsResponse] = await Promise.all([
         getAllBookings(),
-        getAllRooms()
+        getRooms()
       ]);
       
       if (bookingsResponse.success && bookingsResponse.data) {
@@ -91,21 +90,23 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
       const bookingData = {
         roomId: formData.roomId,
         title: formData.title,
-        startTime: selectedSlot?.start.toISOString() || formData.startTime,
-        endTime: selectedSlot?.end.toISOString() || formData.endTime,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
         description: formData.description,
         recurring: formData.recurring
       };
 
-      await createBooking(bookingData);
-      toast({
-        title: "Success",
-        description: "Booking created successfully",
-      });
-      
-      setIsCreateDialogOpen(false);
-      setSelectedSlot(null);
-      loadData();
+      const response = await createBooking(bookingData);
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Booking created successfully",
+        });
+        
+        setIsCreateDialogOpen(false);
+        setSelectedSlot(null);
+        loadData();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -116,16 +117,29 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
   };
 
   const handleUpdateBooking = async (formData: any) => {
+    if (!editingBooking) return;
+    
     try {
-      // In a real app, you'd have an updateBooking service function
-      // For now, we'll show a placeholder message
-      toast({
-        title: "Info",
-        description: "Booking update functionality will be implemented with backend support",
-      });
-      
-      setIsEditDialogOpen(false);
-      setEditingBooking(null);
+      const bookingData = {
+        roomId: formData.roomId,
+        title: formData.title,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        description: formData.description,
+        recurring: formData.recurring
+      };
+
+      const response = await updateBooking(editingBooking.id, bookingData);
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Booking updated successfully",
+        });
+        
+        setIsEditDialogOpen(false);
+        setEditingBooking(null);
+        loadData();
+      }
     } catch (error) {
       toast({
         title: "Error",
