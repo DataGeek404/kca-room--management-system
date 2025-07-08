@@ -1,3 +1,4 @@
+
 import { getAuthToken } from './authService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -8,6 +9,9 @@ export interface User {
   email: string;
   role: 'admin' | 'lecturer' | 'maintenance';
   status: 'active' | 'inactive';
+  phone?: string;
+  bio?: string;
+  avatar?: string;
   created_at: string;
   last_login?: string;
 }

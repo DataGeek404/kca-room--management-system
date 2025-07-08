@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,26 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { User, Settings, Trash2, Save, Eye, EyeOff, Shield } from "lucide-react";
+import { User, Settings, Trash2, Save, Eye, EyeOff, Shield, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { getUserProfile, updateUserProfile, changeUserPassword, UserProfile, UpdateProfileData, ChangePasswordData } from "@/services/profileService";
 
-interface UserSettingsProps {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: 'admin' | 'lecturer' | 'maintenance';
-    phone?: string;
-    bio?: string;
-    avatar?: string;
-    created_at?: string;
-    last_login?: string;
-  };
-  onUserUpdate: (user: any) => void;
-}
-
-export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
+export const UserSettings = () => {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -37,10 +25,10 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
     confirm: false
   });
   const [formData, setFormData] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone || "",
-    bio: user.bio || "",
+    name: "",
+    email: "",
+    phone: "",
+    bio: "",
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -48,7 +36,37 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Load user profile on component mount
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await getUserProfile();
+      if (response.success && response.data) {
+        setUser(response.data);
+        setFormData({
+          name: response.data.name,
+          email: response.data.email,
+          phone: response.data.phone || "",
+          bio: response.data.bio || "",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,8 +103,8 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
 
     if (!passwordData.newPassword) {
       newErrors.newPassword = "New password is required";
-    } else if (passwordData.newPassword.length < 8) {
-      newErrors.newPassword = "Password must be at least 8 characters";
+    } else if (passwordData.newPassword.length < 6) {
+      newErrors.newPassword = "Password must be at least 6 characters";
     }
 
     if (!passwordData.confirmPassword) {
@@ -105,28 +123,32 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
     }
 
     try {
-      console.log("Updating profile:", formData);
-      // TODO: Replace with actual API call
-      // const response = await updateUserProfile(user.id, formData);
+      setIsSubmitting(true);
+      const updateData: UpdateProfileData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        bio: formData.bio,
+      };
+
+      const response = await updateUserProfile(updateData);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const updatedUser = { ...user, ...formData };
-      onUserUpdate(updatedUser);
-      
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
-      });
-      
-      setIsEditing(false);
+      if (response.success && response.data) {
+        setUser(response.data);
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+        });
+        setIsEditing(false);
+      }
     } catch (error) {
       toast({
-        title: "Update Failed",
-        description: "Failed to update profile. Please try again.",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update profile",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -136,16 +158,17 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
     }
 
     try {
-      console.log("Changing password for user:", user.id);
-      // TODO: Replace with actual API call
-      // const response = await changeUserPassword(user.id, passwordData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsSubmitting(true);
+      const passwordChangeData: ChangePasswordData = {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      };
+
+      await changeUserPassword(passwordChangeData);
       
       toast({
-        title: "Password Changed",
-        description: "Your password has been updated successfully.",
+        title: "Success",
+        description: "Password changed successfully",
       });
       
       setShowPasswordDialog(false);
@@ -157,32 +180,26 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
       setErrors({});
     } catch (error) {
       toast({
-        title: "Password Change Failed",
-        description: "Failed to change password. Please check your current password.",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to change password",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleAccountDeletion = async () => {
     try {
-      console.log("Deleting account for user:", user.id);
-      // TODO: Replace with actual API call
-      // const response = await deleteUserAccount(user.id);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      console.log("Account deletion not implemented yet");
       toast({
-        title: "Account Deleted",
-        description: "Your account has been deleted successfully.",
+        title: "Info",
+        description: "Account deletion functionality will be implemented soon",
       });
-      
-      // TODO: Redirect to login or handle logout
       setShowDeleteDialog(false);
     } catch (error) {
       toast({
-        title: "Deletion Failed",
+        title: "Error",
         description: "Failed to delete account. Please try again.",
         variant: "destructive",
       });
@@ -201,6 +218,22 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Unable to load user profile</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -289,8 +322,8 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
                 {errors.bio && <p className="text-sm text-red-500 mt-1">{errors.bio}</p>}
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleProfileUpdate} className="flex-1 sm:flex-none">
-                  <Save className="w-4 h-4 mr-2" />
+                <Button onClick={handleProfileUpdate} className="flex-1 sm:flex-none" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Save Changes
                 </Button>
                 <Button
@@ -341,7 +374,7 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
             <div>
               <Label className="text-sm font-medium">Password</Label>
               <p className="text-sm text-muted-foreground">
-                Last changed: {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                Keep your account secure with a strong password
               </p>
             </div>
             <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
@@ -423,7 +456,8 @@ export const UserSettings = ({ user, onUserUpdate }: UserSettingsProps) => {
                   </div>
                 </div>
                 <DialogFooter className="gap-2">
-                  <Button onClick={handlePasswordChange} className="flex-1">
+                  <Button onClick={handlePasswordChange} className="flex-1" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     Update Password
                   </Button>
                   <Button
