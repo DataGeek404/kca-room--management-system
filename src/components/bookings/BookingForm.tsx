@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +65,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Form data before validation:', formData);
+
     if (!formData.roomId || !formData.title || !formData.startTime || !formData.endTime) {
+      console.log('Validation failed - missing required fields');
+      alert('Please fill in all required fields');
       return;
     }
 
@@ -73,6 +78,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       alert('End time must be after start time');
       return;
     }
+
+    console.log('Form validation passed, submitting:', formData);
 
     setIsSubmitting(true);
     try {
@@ -104,7 +111,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         <Label htmlFor="room">Room *</Label>
         <Select 
           value={formData.roomId.toString()} 
-          onValueChange={(value) => handleInputChange('roomId', parseInt(value))}
+          onValueChange={(value) => handleInputChange('roomId', parseInt(value) || value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a room" />
@@ -188,3 +195,4 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     </form>
   );
 };
+
