@@ -7,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Download, FileText, Table, FileSpreadsheet, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import Swal from "sweetalert2";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReportExporterProps {
   reportType: string;
@@ -32,6 +32,7 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
     department: "all"
   });
   const [departments, setDepartments] = useState<Department[]>([]);
+  const { toast } = useToast();
 
   // Load departments dynamically
   useEffect(() => {
@@ -46,32 +47,6 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
     setDepartments(mockDepartments);
   }, []);
 
-  const showSuccessToast = (message: string) => {
-    Swal.fire({
-      title: 'Success!',
-      text: message,
-      icon: 'success',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true
-    });
-  };
-
-  const showErrorToast = (message: string) => {
-    Swal.fire({
-      title: 'Error!',
-      text: message,
-      icon: 'error',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true
-    });
-  };
-
   const handleExport = () => {
     try {
       onExport(exportFormat, {
@@ -81,9 +56,16 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
       });
       
       const formatLabel = formatOptions.find(f => f.value === exportFormat)?.label || exportFormat;
-      showSuccessToast(`${formatLabel} export started successfully`);
+      toast({
+        title: "Success!",
+        description: `${formatLabel} export started successfully`,
+      });
     } catch (error) {
-      showErrorToast("Failed to export report. Please try again.");
+      toast({
+        title: "Error!",
+        description: "Failed to export report. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -94,19 +76,19 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-          <Download className="h-5 w-5" />
+    <Card className="shadow-sm border-border">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-secondary/5">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-foreground">
+          <Download className="h-5 w-5 text-primary" />
           Export Report
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="space-y-6 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Export Format</label>
+            <label className="text-sm font-medium text-foreground">Export Format</label>
             <Select value={exportFormat} onValueChange={setExportFormat}>
-              <SelectTrigger>
+              <SelectTrigger className="border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -123,11 +105,11 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Date Range</label>
+            <label className="text-sm font-medium text-foreground">Date Range</label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start text-left font-normal w-full">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                <Button variant="outline" className="justify-start text-left font-normal w-full border-input">
+                  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                   {dateRange.from && dateRange.to
                     ? `${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`
                     : "Select date range"}
@@ -152,12 +134,12 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Building</label>
+            <label className="text-sm font-medium text-foreground">Building</label>
             <Select 
               value={filters.building} 
               onValueChange={(value) => setFilters({...filters, building: value})}
             >
-              <SelectTrigger>
+              <SelectTrigger className="border-input">
                 <SelectValue placeholder="All buildings" />
               </SelectTrigger>
               <SelectContent>
@@ -172,12 +154,12 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Floor</label>
+            <label className="text-sm font-medium text-foreground">Floor</label>
             <Select 
               value={filters.floor} 
               onValueChange={(value) => setFilters({...filters, floor: value})}
             >
-              <SelectTrigger>
+              <SelectTrigger className="border-input">
                 <SelectValue placeholder="All floors" />
               </SelectTrigger>
               <SelectContent>
@@ -191,12 +173,12 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Department</label>
+            <label className="text-sm font-medium text-foreground">Department</label>
             <Select 
               value={filters.department} 
               onValueChange={(value) => setFilters({...filters, department: value})}
             >
-              <SelectTrigger>
+              <SelectTrigger className="border-input">
                 <SelectValue placeholder="All departments" />
               </SelectTrigger>
               <SelectContent>
@@ -211,11 +193,14 @@ export const ReportExporter = ({ reportType, data, onExport }: ReportExporterPro
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t">
-          <div className="text-sm text-gray-600">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-border">
+          <div className="text-sm text-muted-foreground">
             {data.length} records available for export
           </div>
-          <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+          <Button 
+            onClick={handleExport} 
+            className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export {formatOptions.find(f => f.value === exportFormat)?.label}
           </Button>
