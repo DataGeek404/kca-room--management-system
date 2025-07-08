@@ -66,13 +66,13 @@ export const DepartmentManagement = () => {
       setIsSubmitting(true);
       if (editingDepartment) {
         await updateDepartment(editingDepartment.id, {
-          name: formData.name,
-          code: formData.code,
-          description: formData.description || undefined,
-          head_of_department: formData.head_of_department || undefined,
-          contact_email: formData.contact_email || undefined,
-          contact_phone: formData.contact_phone || undefined,
-          building: formData.building || undefined,
+          name: formData.name.trim(),
+          code: formData.code.trim().toUpperCase(),
+          description: formData.description.trim() || undefined,
+          head_of_department: formData.head_of_department.trim() || undefined,
+          contact_email: formData.contact_email.trim() || undefined,
+          contact_phone: formData.contact_phone.trim() || undefined,
+          building: formData.building.trim() || undefined,
           floor: formData.floor ? parseInt(formData.floor) : undefined
         });
         toast({
@@ -81,13 +81,13 @@ export const DepartmentManagement = () => {
         });
       } else {
         await createDepartment({
-          name: formData.name,
-          code: formData.code,
-          description: formData.description || undefined,
-          head_of_department: formData.head_of_department || undefined,
-          contact_email: formData.contact_email || undefined,
-          contact_phone: formData.contact_phone || undefined,
-          building: formData.building || undefined,
+          name: formData.name.trim(),
+          code: formData.code.trim().toUpperCase(),
+          description: formData.description.trim() || undefined,
+          head_of_department: formData.head_of_department.trim() || undefined,
+          contact_email: formData.contact_email.trim() || undefined,
+          contact_phone: formData.contact_phone.trim() || undefined,
+          building: formData.building.trim() || undefined,
           floor: formData.floor ? parseInt(formData.floor) : undefined
         });
         toast({
@@ -170,10 +170,13 @@ export const DepartmentManagement = () => {
               Add Department
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md mx-4 max-h-[90vh] overflow-y-auto" aria-describedby="department-dialog-description">
             <DialogHeader>
               <DialogTitle>{editingDepartment ? "Edit Department" : "Add New Department"}</DialogTitle>
             </DialogHeader>
+            <div id="department-dialog-description" className="sr-only">
+              {editingDepartment ? "Edit department information" : "Create a new department with details like name, code, and contact information"}
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="name">Department Name *</Label>

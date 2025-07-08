@@ -72,9 +72,11 @@ const router = express.Router();
  */
 router.get('/', authorize('admin'), async (req, res) => {
   try {
+    console.log('Fetching users from database...');
     const [users] = await pool.execute(
       'SELECT id, name, email, role, phone, bio, avatar, created_at, last_login, status FROM users ORDER BY created_at DESC'
     );
+    console.log(`Found ${users.length} users`);
 
     res.json({
       success: true,
@@ -84,7 +86,8 @@ router.get('/', authorize('admin'), async (req, res) => {
     console.error('Get users error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch users'
+      message: 'Failed to fetch users',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -112,6 +115,7 @@ router.get('/', authorize('admin'), async (req, res) => {
  */
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
+    console.log('Fetching profile for user ID:', req.user.id);
     const [users] = await pool.execute(
       'SELECT id, name, email, role, phone, bio, avatar, created_at, last_login, status FROM users WHERE id = ?',
       [req.user.id]
@@ -132,7 +136,8 @@ router.get('/profile', authenticateToken, async (req, res) => {
     console.error('Get profile error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch profile'
+      message: 'Failed to fetch profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -362,19 +367,21 @@ router.put('/change-password', authenticateToken, async (req, res) => {
 router.post('/', authorize('admin'), async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    console.log('Creating user with data:', { name, email, role });
 
     // Validation
     if (!name || !email || !password || !role) {
+      console.log('Validation failed: Missing required fields');
       return res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'All fields (name, email, password, role) are required'
       });
     }
 
     if (!['admin', 'lecturer', 'maintenance'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role'
+        message: 'Invalid role. Must be admin, lecturer, or maintenance'
       });
     }
 
@@ -388,7 +395,7 @@ router.post('/', authorize('admin'), async (req, res) => {
     // Check if email already exists
     const [existingUsers] = await pool.execute(
       'SELECT id FROM users WHERE email = ?',
-      [email]
+      [email.toLowerCase()]
     );
 
     if (existingUsers.length > 0) {
@@ -405,7 +412,7 @@ router.post('/', authorize('admin'), async (req, res) => {
     // Create user
     const [result] = await pool.execute(
       'INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
-      [name, email, passwordHash, role, 'active']
+      [name.trim(), email.toLowerCase().trim(), passwordHash, role, 'active']
     );
 
     // Get the created user
@@ -413,6 +420,8 @@ router.post('/', authorize('admin'), async (req, res) => {
       'SELECT id, name, email, role, phone, bio, avatar, status, created_at FROM users WHERE id = ?',
       [result.insertId]
     );
+
+    console.log('User created successfully with ID:', result.insertId);
 
     res.status(201).json({
       success: true,
@@ -423,7 +432,8 @@ router.post('/', authorize('admin'), async (req, res) => {
     console.error('Create user error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create user'
+      message: 'Failed to create user',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

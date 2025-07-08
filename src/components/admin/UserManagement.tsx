@@ -52,10 +52,19 @@ export const UserManagement = () => {
           description: "User editing functionality not yet implemented"
         });
       } else {
-        // Handle creation
+        // Handle creation with proper validation
+        if (!formData.name || !formData.email || !formData.password || !formData.role) {
+          toast({
+            title: "Error",
+            description: "All fields are required",
+            variant: "destructive"
+          });
+          return;
+        }
+
         const response = await createUser({
-          name: formData.name,
-          email: formData.email,
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
           password: formData.password,
           role: formData.role
         });
@@ -159,10 +168,13 @@ export const UserManagement = () => {
               Add New User
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md" aria-describedby="add-user-description">
             <DialogHeader>
               <DialogTitle>Add New User</DialogTitle>
             </DialogHeader>
+            <div id="add-user-description" className="sr-only">
+              Create a new user account with name, email, password, and role
+            </div>
             <UserForm
               onSubmit={handleSubmit}
               onCancel={() => setIsAddDialogOpen(false)}
@@ -229,10 +241,13 @@ export const UserManagement = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="edit-user-description">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
+          <div id="edit-user-description" className="sr-only">
+            Edit user information including name, email, and role
+          </div>
           {editingUser && (
             <UserForm
               initialData={editingUser}

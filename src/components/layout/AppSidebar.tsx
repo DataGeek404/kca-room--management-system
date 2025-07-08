@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { User } from "@/types/auth";
 import { 
   Home, 
@@ -105,7 +104,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -114,9 +113,10 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                     isActive={activeView === item.id}
                     onClick={() => setActiveView(item.id)}
                     tooltip={isCollapsed ? item.label : undefined}
+                    className={isCollapsed ? "justify-center px-2" : ""}
                   >
-                    <item.icon className="h-4 w-4" />
-                    {!isCollapsed && <span>{item.label}</span>}
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    {!isCollapsed && <span className="truncate">{item.label}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -125,7 +125,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>Account</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -133,9 +133,10 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
                   isActive={activeView === "settings"}
                   onClick={() => setActiveView("settings")}
                   tooltip={isCollapsed ? "Settings" : undefined}
+                  className={isCollapsed ? "justify-center px-2" : ""}
                 >
-                  <Settings className="h-4 w-4" />
-                  {!isCollapsed && <span>Settings</span>}
+                  <Settings className="h-4 w-4 flex-shrink-0" />
+                  {!isCollapsed && <span className="truncate">Settings</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -144,7 +145,7 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        {!isCollapsed && (
+        {!isCollapsed ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3 p-3 bg-sidebar-accent rounded-xl">
               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
@@ -170,6 +171,25 @@ export const AppSidebar = ({ user, activeView, setActiveView, onLogout }: AppSid
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center space-y-2">
+            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            {onLogout && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onLogout}
+                className="p-2 w-10 h-10"
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
               </Button>
             )}
           </div>
