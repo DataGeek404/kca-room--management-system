@@ -1,5 +1,4 @@
 
-
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -57,9 +56,9 @@ router.post(
       const hashedPassword = await bcrypt.hash(password, salt);
       console.log('Password hashed successfully');
 
-      // Insert user into database
+      // Insert user into database - using password_hash column name
       const [result] = await pool.execute(
-        'INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
         [name, email, hashedPassword, role, 'active']
       );
 
@@ -118,8 +117,8 @@ router.post(
     try {
       console.log('Login attempt for email:', email);
 
-      // Check if user exists
-      let [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+      // Check if user exists - select password_hash column
+      let [users] = await pool.execute('SELECT id, name, email, password_hash, role FROM users WHERE email = ?', [email]);
 
       if (users.length === 0) {
         console.log('User not found:', email);
@@ -129,20 +128,20 @@ router.post(
       const user = users[0];
       console.log('User found:', { id: user.id, email: user.email, role: user.role });
 
-      // Check if password exists in database
-      if (!user.password) {
-        console.log('Password is null/undefined for user:', email);
+      // Check if password_hash exists in database
+      if (!user.password_hash) {
+        console.log('Password hash is null/undefined for user:', email);
         return res.status(400).json({ success: false, message: 'Account configuration error. Please contact administrator.' });
       }
 
       // Validate password format before comparison
-      if (typeof password !== 'string' || typeof user.password !== 'string') {
-        console.log('Invalid password format - password type:', typeof password, 'stored password type:', typeof user.password);
+      if (typeof password !== 'string' || typeof user.password_hash !== 'string') {
+        console.log('Invalid password format - password type:', typeof password, 'stored password_hash type:', typeof user.password_hash);
         return res.status(400).json({ success: false, message: 'Invalid password format' });
       }
 
-      // Check password
-      const isMatch = await bcrypt.compare(password, user.password);
+      // Check password using password_hash
+      const isMatch = await bcrypt.compare(password, user.password_hash);
 
       if (!isMatch) {
         console.log('Password mismatch for user:', email);
