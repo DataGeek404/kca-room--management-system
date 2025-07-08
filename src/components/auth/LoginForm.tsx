@@ -39,10 +39,8 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
       const response = await loginUser(credentials);
       
       if (response.success && response.data) {
-        // Store the JWT token
         storeAuthToken(response.data.token);
         
-        // Call the onLogin callback with user data
         onLogin({
           id: response.data.user.id.toString(),
           name: response.data.user.name,
@@ -70,8 +68,12 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-slate-100 p-4">
       <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-4">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto">
-            <span className="text-white font-bold text-xl">KCA</span>
+          <div className="w-20 h-20 mx-auto">
+            <img 
+              src="/lovable-uploads/7058a8d7-bb65-444c-99ce-78b033e0b8e0.png" 
+              alt="KCA University Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
             Room Management System
