@@ -1,20 +1,73 @@
-
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoomBrowser } from "@/components/rooms/RoomBrowser";
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { MyBookings } from "@/components/bookings/MyBookings";
+import { getRooms } from "@/services/roomService";
+import { createBooking } from "@/services/bookingService";
+import { Room } from "@/services/roomService";
+import { toast } from "sonner";
 
 interface LecturerDashboardProps {
   activeView: string;
 }
 
 export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        setIsLoading(true);
+        const response = await getRooms();
+        if (response.success && response.data) {
+          setRooms(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching rooms:', error);
+        toast.error('Failed to load rooms');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (activeView === 'book') {
+      fetchRooms();
+    }
+  }, [activeView]);
+
+  const handleBookingSubmit = async (data: any) => {
+    try {
+      const response = await createBooking(data);
+      if (response.success) {
+        toast.success('Booking request submitted successfully');
+      } else {
+        toast.error(response.message || 'Failed to create booking');
+      }
+    } catch (error: any) {
+      console.error('Error creating booking:', error);
+      toast.error(error.message || 'Failed to create booking');
+    }
+  };
+
+  const handleBookingCancel = () => {
+    // Handle cancel action if needed
+    console.log('Booking cancelled');
+  };
+
   if (activeView === "browse") {
     return <RoomBrowser />;
   }
   
   if (activeView === "book") {
-    return <BookingForm />;
+    return (
+      <BookingForm 
+        rooms={rooms}
+        onSubmit={handleBookingSubmit}
+        onCancel={handleBookingCancel}
+      />
+    );
   }
   
   if (activeView === "mybookings") {
