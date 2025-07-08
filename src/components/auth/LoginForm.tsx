@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { User, LoginCredentials } from "@/types/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginFormProps {
   onLogin: (user: User) => void;
@@ -15,28 +16,43 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     email: "",
     password: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  // Mock users for demo
-  const mockUsers = [
-    { id: "1", name: "Dr. Sarah Admin", email: "admin@kca.ac.ke", role: "admin" as const },
-    { id: "2", name: "Prof. John Lecturer", email: "lecturer@kca.ac.ke", role: "lecturer" as const },
-    { id: "3", name: "Mike Maintenance", email: "maintenance@kca.ac.ke", role: "maintenance" as const }
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Mock authentication - in real app, this would call an API
-    const user = mockUsers.find(u => u.email === credentials.email);
-    if (user) {
-      onLogin(user);
+    if (!credentials.email || !credentials.password) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter both email and password",
+        variant: "destructive"
+      });
+      return;
     }
-  };
 
-  const handleDemoLogin = (role: 'admin' | 'lecturer' | 'maintenance') => {
-    const user = mockUsers.find(u => u.role === role);
-    if (user) {
-      onLogin(user);
+    setIsLoading(true);
+    
+    try {
+      // TODO: Replace with real authentication API call
+      // const response = await authenticateUser(credentials);
+      
+      // Temporary: This should be replaced with real authentication
+      console.log("Login attempt:", credentials.email);
+      toast({
+        title: "Authentication Error",
+        description: "Please set up Supabase authentication to enable login",
+        variant: "destructive"
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,10 +78,11 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Enter your KCA email"
                 value={credentials.email}
                 onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
                 className="h-11"
+                required
               />
             </div>
             
@@ -78,48 +95,23 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 value={credentials.password}
                 onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
                 className="h-11"
+                required
               />
             </div>
             
             <Button 
               type="submit" 
               className="w-full h-11 bg-blue-600 hover:bg-blue-700 transition-colors"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
           
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Demo Access</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => handleDemoLogin('admin')}
-              className="h-10 text-sm hover:bg-blue-50 hover:border-blue-200"
-            >
-              Demo as Administrator
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => handleDemoLogin('lecturer')}
-              className="h-10 text-sm hover:bg-green-50 hover:border-green-200"
-            >
-              Demo as Lecturer
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => handleDemoLogin('maintenance')}
-              className="h-10 text-sm hover:bg-orange-50 hover:border-orange-200"
-            >
-              Demo as Maintenance Staff
-            </Button>
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Forgot your password? Contact IT support
+            </p>
           </div>
         </CardContent>
       </Card>
