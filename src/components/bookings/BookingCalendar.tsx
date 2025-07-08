@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'react-big-calendar';
 import { momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Booking, getAllBookings, cancelBooking, createBooking, updateBooking } from "@/services/bookingService";
+import { Booking, getAllBookings, getMyBookings, cancelBooking, createBooking, updateBooking } from "@/services/bookingService";
 import { Room, getRooms } from "@/services/roomService";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,10 @@ const localizer = momentLocalizer(moment);
 
 interface BookingCalendarProps {
   viewType: "admin" | "user";
+  userRole?: string;
 }
 
-export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) => {
+export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType, userRole }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,14 +34,19 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [viewType]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      
+      // Load bookings based on view type
+      const bookingsPromise = viewType === "admin" ? getAllBookings() : getMyBookings();
+      const roomsPromise = getRooms();
+      
       const [bookingsResponse, roomsResponse] = await Promise.all([
-        getAllBookings(),
-        getRooms()
+        bookingsPromise,
+        roomsPromise
       ]);
       
       if (bookingsResponse.success && bookingsResponse.data) {
@@ -71,10 +78,9 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
   };
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    if (viewType === "admin") {
-      setSelectedSlot({ start, end });
-      setIsCreateDialogOpen(true);
-    }
+    // Both admin and regular users can create bookings by selecting slots
+    setSelectedSlot({ start, end });
+    setIsCreateDialogOpen(true);
   };
 
   const handleEditBooking = () => {
@@ -201,10 +207,22 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
     };
   };
 
+  const canEditBooking = (booking: Booking) => {
+    return viewType === "admin" || (viewType === "user" && booking.user_id === getCurrentUserId());
+  };
+
+  const getCurrentUserId = () => {
+    // This would normally come from your auth context
+    // For now, returning a placeholder - you should integrate with your auth system
+    return 1;
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Booking Calendar</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          {viewType === "admin" ? "Booking Calendar (Admin)" : "My Bookings Calendar"}
+        </h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--primary))' }}></div>
@@ -214,15 +232,13 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--destructive))' }}></div>
             <span>Cancelled</span>
           </div>
-          {viewType === "admin" && (
-            <Button 
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Create Booking
-            </Button>
-          )}
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Create Booking
+          </Button>
         </div>
       </div>
 
@@ -241,7 +257,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
             style={{ height: 600 }}
             onSelectEvent={handleEventClick}
             onSelectSlot={handleSelectSlot}
-            selectable={viewType === "admin"}
+            selectable={true}
             eventPropGetter={eventStyleGetter}
             className="rbc-calendar-custom"
           />
@@ -264,10 +280,12 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
                   <span className="text-sm font-medium text-muted-foreground">Room:</span>
                   <p className="text-sm font-medium">{selectedEvent.room_name}</p>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">User:</span>
-                  <p className="text-sm font-medium">{selectedEvent.user_name}</p>
-                </div>
+                {viewType === "admin" && (
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">User:</span>
+                    <p className="text-sm font-medium">{selectedEvent.user_name}</p>
+                  </div>
+                )}
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Start Time:</span>
                   <p className="text-sm">{moment(selectedEvent.start_time).format('MMMM Do YYYY, h:mm a')}</p>
@@ -294,11 +312,11 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
                 )}
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                {viewType === "admin" ? (
+                <Button variant="outline" onClick={handleCloseDialog}>
+                  Close
+                </Button>
+                {canEditBooking(selectedEvent) && (
                   <>
-                    <Button variant="outline" onClick={handleCloseDialog}>
-                      Close
-                    </Button>
                     <Button variant="secondary" onClick={handleEditBooking} className="gap-2">
                       <Edit className="w-4 h-4" />
                       Edit
@@ -308,10 +326,6 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
                       Cancel
                     </Button>
                   </>
-                ) : (
-                  <Button variant="outline" onClick={handleCloseDialog}>
-                    Close
-                  </Button>
                 )}
               </div>
             </div>
@@ -325,15 +339,27 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({ viewType }) =>
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Create New Booking</DialogTitle>
           </DialogHeader>
-          <AdminBookingForm
-            rooms={rooms}
-            onSubmit={handleCreateBooking}
-            onCancel={() => {
-              setIsCreateDialogOpen(false);
-              setSelectedSlot(null);
-            }}
-            initialSlot={selectedSlot}
-          />
+          {viewType === "admin" ? (
+            <AdminBookingForm
+              rooms={rooms}
+              onSubmit={handleCreateBooking}
+              onCancel={() => {
+                setIsCreateDialogOpen(false);
+                setSelectedSlot(null);
+              }}
+              initialSlot={selectedSlot}
+            />
+          ) : (
+            <BookingForm
+              rooms={rooms}
+              onSubmit={handleCreateBooking}
+              onCancel={() => {
+                setIsCreateDialogOpen(false);
+                setSelectedSlot(null);
+              }}
+              initialSlot={selectedSlot}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

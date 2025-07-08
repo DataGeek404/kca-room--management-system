@@ -10,7 +10,7 @@ import { Room } from "@/services/roomService";
 import { Booking } from "@/services/bookingService";
 import moment from 'moment';
 
-interface BookingFormProps {
+interface LecturerBookingFormProps {
   rooms: Room[];
   onSubmit: (data: any) => void;
   onCancel: () => void;
@@ -18,7 +18,7 @@ interface BookingFormProps {
   initialBooking?: Booking | null;
 }
 
-export const BookingForm: React.FC<BookingFormProps> = ({
+export const LecturerBookingForm: React.FC<LecturerBookingFormProps> = ({
   rooms,
   onSubmit,
   onCancel,
