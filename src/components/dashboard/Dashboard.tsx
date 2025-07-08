@@ -14,8 +14,11 @@ import { MaintenanceRequests } from "@/components/maintenance/MaintenanceRequest
 import { ReportsView } from "@/components/reports/ReportsView";
 import { UserSettings } from "@/components/settings/UserSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Clock } from "lucide-react";
+import { Bell, Clock, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { cn } from "@/lib/utils";
 
 interface DashboardProps {
   user: User;
@@ -24,6 +27,52 @@ interface DashboardProps {
 
 export const Dashboard = ({ user, onLogout }: DashboardProps) => {
   const [activeView, setActiveView] = useState("overview");
+
+  const getPageTitle = () => {
+    switch (activeView) {
+      case "overview":
+        return "Dashboard";
+      case "rooms":
+        return "Room Management";
+      case "bookings":
+        return user.role === 'admin' ? 'All Bookings' : 'My Bookings';
+      case "users":
+        return "User Management";
+      case "departments":
+        return "Department Management";
+      case "maintenance":
+        return "Maintenance";
+      case "reports":
+        return "Reports";
+      case "settings":
+        return "Settings";
+      default:
+        return "Dashboard";
+    }
+  };
+
+  const getPageDescription = () => {
+    switch (activeView) {
+      case "overview":
+        return `Welcome back, ${user.name}. Here's your system overview.`;
+      case "rooms":
+        return "Manage rooms, facilities, and availability";
+      case "bookings":
+        return user.role === 'admin' ? 'Monitor and manage all bookings' : 'View and manage your bookings';
+      case "users":
+        return "Manage system users and permissions";
+      case "departments":
+        return "Organize and manage departments";
+      case "maintenance":
+        return "Track and manage maintenance requests";
+      case "reports":
+        return "View detailed analytics and reports";
+      case "settings":
+        return "Customize your preferences and profile";
+      default:
+        return `Welcome back, ${user.name}`;
+    }
+  };
 
   const renderContent = () => {
     switch (activeView) {
@@ -45,9 +94,12 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
       
       case "users":
         return user.role === 'admin' ? <UserManagement /> : (
-          <Card>
+          <Card className="card-elevated">
             <CardHeader>
-              <CardTitle>Access Denied</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Bell className="w-5 h-5" />
+                Access Denied
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
@@ -59,9 +111,12 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
       
       case "departments":
         return user.role === 'admin' ? <DepartmentManagement /> : (
-          <Card>
+          <Card className="card-elevated">
             <CardHeader>
-              <CardTitle>Access Denied</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Bell className="w-5 h-5" />
+                Access Denied
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
@@ -82,7 +137,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
       
       default:
         return (
-          <Card>
+          <Card className="card-elevated">
             <CardHeader>
               <CardTitle>Coming Soon</CardTitle>
             </CardHeader>
@@ -98,7 +153,7 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar 
           user={user} 
           activeView={activeView} 
@@ -106,37 +161,68 @@ export const Dashboard = ({ user, onLogout }: DashboardProps) => {
           onLogout={onLogout}
         />
         
-        <SidebarInset>
-          {/* Header */}
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+        <SidebarInset className="flex-1">
+          {/* Enhanced Header */}
+          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-border/50 bg-background/95 backdrop-blur-sm px-4">
+            <SidebarTrigger className="-ml-1 show-mobile" />
+            
             <div className="flex flex-1 items-center justify-between">
-              <div>
-                <h1 className="text-xl font-semibold">
-                  {activeView === 'overview' ? 'Dashboard' : 
-                   activeView.charAt(0).toUpperCase() + activeView.slice(1)}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Welcome back, {user.name}
-                </p>
+              <div className="flex items-center gap-4">
+                <div className="hide-mobile">
+                  <h1 className="text-xl font-bold text-foreground">
+                    {getPageTitle()}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {getPageDescription()}
+                  </p>
+                </div>
+                <div className="show-mobile">
+                  <h1 className="text-lg font-semibold text-foreground">
+                    {getPageTitle()}
+                  </h1>
+                </div>
               </div>
               
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <Bell className="w-4 h-4 mr-2" />
-                  Notifications
+                <ThemeToggle />
+                
+                <Button variant="outline" size="sm" className="gap-2 hide-mobile">
+                  <Bell className="w-4 h-4" />
+                  <span className="hidden lg:inline">Notifications</span>
+                  <Badge variant="destructive" className="ml-1 px-1.5 py-0.5 text-xs">
+                    3
+                  </Badge>
                 </Button>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                
+                <div className="flex items-center gap-2 text-sm text-muted-foreground hide-mobile">
                   <Clock className="w-4 h-4" />
-                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <span className="hidden md:inline">
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 pl-2 border-l border-border/50 hide-mobile">
+                  <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary-foreground font-semibold text-sm">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="hidden xl:block">
+                    <p className="text-sm font-medium text-foreground">{user.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </header>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto p-4">
-            {renderContent()}
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-auto">
+            <div className="container-responsive py-6">
+              <div className="animate-fade-in">
+                {renderContent()}
+              </div>
+            </div>
           </main>
         </SidebarInset>
       </div>
