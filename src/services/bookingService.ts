@@ -1,3 +1,4 @@
+
 import { getAuthToken } from './authService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -47,8 +48,7 @@ const getAuthHeaders = () => {
 const checkBackendHealth = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`, {
-      method: 'GET',
-      timeout: 5000
+      method: 'GET'
     });
     return response.ok;
   } catch (error) {
