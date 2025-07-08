@@ -13,6 +13,19 @@ import { Plus, Wrench, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { MaintenanceRequest, getMaintenanceRequests, createMaintenanceRequest, updateMaintenanceRequest } from "@/services/maintenanceService";
 import { Room, getRooms } from "@/services/roomService";
 
+// Define proper types for form data
+interface CreateFormData {
+  roomId: string;
+  issue: string;
+  priority: 'low' | 'medium' | 'high';
+  description: string;
+}
+
+interface UpdateFormData {
+  status: 'pending' | 'in-progress' | 'completed';
+  notes: string;
+}
+
 export const MaintenanceRequests = () => {
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -25,15 +38,15 @@ export const MaintenanceRequests = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const [createFormData, setCreateFormData] = useState({
+  const [createFormData, setCreateFormData] = useState<CreateFormData>({
     roomId: "",
     issue: "",
-    priority: "medium" as const,
+    priority: "medium",
     description: ""
   });
 
-  const [updateFormData, setUpdateFormData] = useState({
-    status: "pending" as const,
+  const [updateFormData, setUpdateFormData] = useState<UpdateFormData>({
+    status: "pending",
     notes: ""
   });
 
