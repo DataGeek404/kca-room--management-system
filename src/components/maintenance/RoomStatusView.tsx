@@ -173,8 +173,13 @@ export const RoomStatusView = () => {
                 </div>
                 
                 <div className="text-sm">
-                  <p className="text-gray-500">Equipment:</p>
-                  <p className="font-medium">{room.equipment || 'Basic'}</p>
+                  <p className="text-gray-500">Resources:</p>
+                  <p className="font-medium">
+                    {room.resources && room.resources.length > 0 
+                      ? room.resources.join(', ') 
+                      : 'Basic'
+                    }
+                  </p>
                 </div>
                 
                 <div className="flex gap-2">
