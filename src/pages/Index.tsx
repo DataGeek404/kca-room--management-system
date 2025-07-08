@@ -1,63 +1,79 @@
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
-import { User } from "@/types/auth";
-import { getAuthToken, removeAuthToken } from "@/services/authService";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 
 const Index = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for existing authentication session
-    const checkAuthSession = async () => {
-      try {
-        const token = getAuthToken();
-        if (token) {
-          // TODO: Validate token with backend and get user data
-          // For now, we'll just check if token exists
-          console.log("Token found, but validation not implemented yet");
-        }
-      } catch (error) {
-        console.error("Session check failed:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuthSession();
-  }, []);
-
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-  };
-
-  const handleLogout = async () => {
-    try {
-      removeAuthToken();
-      setCurrentUser(null);
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
-  if (isLoading) {
+  const { user, logout } = useAuth();
+  const [activeView, setActiveView] = useState("overview");
+  
+  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="w-full max-w-md">
+          <LoginForm />
         </div>
       </div>
     );
   }
 
-  if (!currentUser) {
-    return <LoginForm onLogin={handleLogin} />;
-  }
+  const getPageTitle = () => {
+    switch (activeView) {
+      case "overview":
+        return "Dashboard";
+      case "rooms":
+        return "Room Management";
+      case "bookings":
+        return "Bookings";
+      case "users":
+        return "User Management";
+      case "departments":
+        return "Departments";
+      case "maintenance":
+        return "Maintenance";
+      case "reports":
+        return "Reports";
+      case "settings":
+        return "Settings";
+      default:
+        return "Dashboard";
+    }
+  };
 
-  return <Dashboard user={currentUser} onLogout={handleLogout} />;
+  return (
+    <>
+      <AppSidebar 
+        user={user} 
+        activeView={activeView} 
+        setActiveView={setActiveView}
+        onLogout={logout}
+      />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-medium">
+                  {getPageTitle()}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          <Dashboard activeView={activeView} user={user} />
+        </div>
+      </SidebarInset>
+    </>
+  );
 };
 
 export default Index;

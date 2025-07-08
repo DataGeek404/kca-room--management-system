@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Calendar, Users, Wrench, TrendingUp, AlertTriangle, Activity, Database } from "lucide-react";
@@ -154,21 +153,22 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8">
       {/* Header Section */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">Admin Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground lg:text-3xl">Admin Dashboard</h1>
         <p className="text-sm text-muted-foreground lg:text-base">Overview of system statistics and activities</p>
       </div>
 
       {/* Quick Actions */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Button 
           onClick={() => setShowBookingCalendar(true)}
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
+          size="sm"
         >
           <Calendar className="w-4 h-4" />
-          Manage All Bookings
+          <span className="truncate">Manage All Bookings</span>
         </Button>
       </div>
 
@@ -181,19 +181,19 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-              <div className={`rounded-lg bg-background/50 p-2 shadow-sm`}>
-                <card.icon className={`h-5 w-5 ${card.color}`} />
+              <CardTitle className="text-sm font-medium text-muted-foreground truncate pr-2">{card.title}</CardTitle>
+              <div className={`rounded-lg bg-background/50 p-2 shadow-sm flex-shrink-0`}>
+                <card.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className={`text-3xl font-bold ${card.color}`}>{card.value}</div>
+                <div className={`text-2xl sm:text-3xl font-bold ${card.color}`}>{card.value}</div>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">{card.subtitle}</p>
+                  <p className="text-xs text-muted-foreground truncate pr-2">{card.subtitle}</p>
                   <Badge 
                     variant={card.changeType === 'positive' ? 'default' : 'destructive'}
-                    className="text-xs px-2 py-1"
+                    className="text-xs px-2 py-1 flex-shrink-0"
                   >
                     {card.change}
                   </Badge>
@@ -205,31 +205,31 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       </div>
 
       {/* System Health and Activity Cards */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card className="border-0 shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              System Health
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+              <span className="truncate">System Health</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col items-center rounded-lg bg-green-50 p-4 text-center">
-                <Database className="mb-2 h-6 w-6 text-green-600" />
-                <span className="text-2xl font-bold text-green-600">99.8%</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col items-center rounded-lg bg-green-50 p-3 sm:p-4 text-center">
+                <Database className="mb-2 h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+                <span className="text-xl sm:text-2xl font-bold text-green-600">99.8%</span>
                 <span className="text-xs text-muted-foreground">Database Uptime</span>
               </div>
-              <div className="flex flex-col items-center rounded-lg bg-blue-50 p-4 text-center">
-                <Activity className="mb-2 h-6 w-6 text-blue-600" />
-                <span className="text-2xl font-bold text-blue-600">{stats.activeDepartments}</span>
+              <div className="flex flex-col items-center rounded-lg bg-blue-50 p-3 sm:p-4 text-center">
+                <Activity className="mb-2 h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                <span className="text-xl sm:text-2xl font-bold text-blue-600">{stats.activeDepartments}</span>
                 <span className="text-xs text-muted-foreground">Active Departments</span>
               </div>
             </div>
             <div className="border-t border-border/50 pt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <span className="text-sm text-muted-foreground">System Status</span>
-                <Badge variant="default" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="default" className="bg-green-50 text-green-700 border-green-200 w-fit">
                   All Systems Operational
                 </Badge>
               </div>
@@ -239,9 +239,9 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
 
         <Card className="border-0 shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-              Recent Activity
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 flex-shrink-0" />
+              <span className="truncate">Recent Activity</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -249,7 +249,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
               <div className="flex items-start gap-3 rounded-lg bg-blue-50 p-3">
                 <Users className="mt-1 h-4 w-4 flex-shrink-0 text-blue-600" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {stats.totalUsers > 0 ? `${stats.totalUsers} users registered` : 'No users yet'}
                   </p>
                   <p className="text-xs text-muted-foreground">System users</p>
@@ -259,7 +259,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
               <div className="flex items-start gap-3 rounded-lg bg-green-50 p-3">
                 <Building className="mt-1 h-4 w-4 flex-shrink-0 text-green-600" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {stats.activeDepartments > 0 ? `${stats.activeDepartments} departments active` : 'No departments yet'}
                   </p>
                   <p className="text-xs text-muted-foreground">Department management</p>
@@ -269,7 +269,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
               <div className="flex items-start gap-3 rounded-lg bg-purple-50 p-3">
                 <Activity className="mt-1 h-4 w-4 flex-shrink-0 text-purple-600" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">System monitoring active</p>
+                  <p className="text-sm font-medium text-foreground truncate">System monitoring active</p>
                   <p className="text-xs text-muted-foreground">Real-time tracking</p>
                 </div>
               </div>
