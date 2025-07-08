@@ -8,16 +8,25 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
+import { User } from "@/types/auth";
 
 const Index = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const [activeView, setActiveView] = useState("overview");
+  
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+  };
+
+  const handleLogout = async () => {
+    logout();
+  };
   
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="w-full max-w-md">
-          <LoginForm />
+          <LoginForm onLogin={handleLogin} />
         </div>
       </div>
     );
@@ -52,7 +61,7 @@ const Index = () => {
         user={user} 
         activeView={activeView} 
         setActiveView={setActiveView}
-        onLogout={logout}
+        onLogout={handleLogout}
       />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -69,7 +78,7 @@ const Index = () => {
           </Breadcrumb>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          <Dashboard activeView={activeView} user={user} />
+          <Dashboard user={user} onLogout={handleLogout} />
         </div>
       </SidebarInset>
     </>
