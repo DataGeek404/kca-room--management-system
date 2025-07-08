@@ -39,6 +39,13 @@ const getAuthHeaders = () => {
   };
 };
 
+const parseRoomData = (room: any): Room => {
+  return {
+    ...room,
+    resources: Array.isArray(room.resources) ? room.resources : []
+  };
+};
+
 export const getRooms = async (params?: {
   building?: string;
   floor?: number;
@@ -66,7 +73,13 @@ export const getRooms = async (params?: {
     throw new Error(errorData.message || 'Failed to fetch rooms');
   }
 
-  return response.json();
+  const result = await response.json();
+  
+  if (result.success && result.data) {
+    result.data = result.data.map(parseRoomData);
+  }
+
+  return result;
 };
 
 export const createRoom = async (roomData: CreateRoomData): Promise<ApiResponse<Room>> => {
@@ -81,7 +94,13 @@ export const createRoom = async (roomData: CreateRoomData): Promise<ApiResponse<
     throw new Error(errorData.message || 'Failed to create room');
   }
 
-  return response.json();
+  const result = await response.json();
+  
+  if (result.success && result.data) {
+    result.data = parseRoomData(result.data);
+  }
+
+  return result;
 };
 
 export const updateRoom = async (id: number, roomData: Partial<CreateRoomData> & { status?: string }): Promise<ApiResponse<Room>> => {
@@ -96,7 +115,13 @@ export const updateRoom = async (id: number, roomData: Partial<CreateRoomData> &
     throw new Error(errorData.message || 'Failed to update room');
   }
 
-  return response.json();
+  const result = await response.json();
+  
+  if (result.success && result.data) {
+    result.data = parseRoomData(result.data);
+  }
+
+  return result;
 };
 
 export const deleteRoom = async (id: number): Promise<ApiResponse<void>> => {
