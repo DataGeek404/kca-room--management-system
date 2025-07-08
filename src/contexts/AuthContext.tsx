@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getProfile, removeAuthToken } from '@/services/authService';
+import { getProfile } from '@/services/authService';
 
 interface User {
   id: number;
@@ -13,7 +13,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   setUser: (user: User | null) => void;
-  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUser = async () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token');
       if (token) {
         const response = await getProfile();
         if (response.success && response.data) {
@@ -37,19 +36,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Failed to load user:', error);
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    removeAuthToken();
-    setUser(null);
-  };
-
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, setUser }}>
       {children}
     </AuthContext.Provider>
   );
