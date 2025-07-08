@@ -8,16 +8,21 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
+import { User } from "@/types/auth";
 
 const Index = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const [activeView, setActiveView] = useState("overview");
+  
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+  };
   
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="w-full max-w-md">
-          <LoginForm />
+          <LoginForm onLogin={handleLogin} />
         </div>
       </div>
     );
