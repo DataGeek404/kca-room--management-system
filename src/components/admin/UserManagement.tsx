@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Users, UserCheck, Wrench } from "lucide-react";
 import { UserCard, User } from "./UserCard";
 import { UserForm } from "./UserForm";
-import { getUsers, updateUserStatus, updateUserRole, deleteUser } from "@/services/userService";
+import { getUsers, createUser, updateUserStatus, updateUserRole, deleteUser } from "@/services/userService";
 
 export const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,16 +44,32 @@ export const UserManagement = () => {
   const handleSubmit = async (formData: any) => {
     try {
       setIsSubmitting(true);
-      // Implementation would depend on backend API
-      toast({
-        title: "Success",
-        description: editingUser ? "User updated successfully" : "User created successfully"
-      });
       
-      setIsAddDialogOpen(false);
-      setIsEditDialogOpen(false);
-      setEditingUser(null);
-      loadUsers();
+      if (editingUser) {
+        // Handle editing - this would require additional backend implementation
+        toast({
+          title: "Info",
+          description: "User editing functionality not yet implemented"
+        });
+      } else {
+        // Handle creation
+        const response = await createUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        });
+        
+        if (response.success) {
+          toast({
+            title: "Success",
+            description: "User created successfully"
+          });
+          
+          setIsAddDialogOpen(false);
+          loadUsers(); // Reload users to show the new one
+        }
+      }
     } catch (error) {
       toast({
         title: "Error",

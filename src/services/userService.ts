@@ -1,4 +1,3 @@
-
 import { getAuthToken } from './authService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -11,6 +10,13 @@ export interface User {
   status: 'active' | 'inactive';
   created_at: string;
   last_login?: string;
+}
+
+export interface CreateUserData {
+  name: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'lecturer' | 'maintenance';
 }
 
 export interface ApiResponse<T> {
@@ -35,6 +41,21 @@ export const getUsers = async (): Promise<ApiResponse<User[]>> => {
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || 'Failed to fetch users');
+  }
+
+  return response.json();
+};
+
+export const createUser = async (userData: CreateUserData): Promise<ApiResponse<User>> => {
+  const response = await fetch(`${API_BASE_URL}/users`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(userData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to create user');
   }
 
   return response.json();
