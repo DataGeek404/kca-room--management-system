@@ -3,23 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoomBrowser } from "@/components/rooms/RoomBrowser";
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { MyBookings } from "@/components/bookings/MyBookings";
-import { LecturerReports } from "@/components/reports/LecturerReports";
 
 interface LecturerDashboardProps {
   activeView: string;
 }
 
 export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
-  if (activeView === "bookings") {
-    return <MyBookings />;
-  }
-  
-  if (activeView === "rooms") {
+  if (activeView === "browse") {
     return <RoomBrowser />;
   }
   
-  if (activeView === "reports") {
-    return <LecturerReports />;
+  if (activeView === "book") {
+    return <BookingForm />;
+  }
+  
+  if (activeView === "mybookings") {
+    return <MyBookings />;
   }
 
   return (
