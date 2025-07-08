@@ -7,6 +7,8 @@ import { getDepartments } from "@/services/departmentService";
 import { getRooms } from "@/services/roomService";
 import { getAllBookings } from "@/services/bookingService";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { BookingCalendar } from "@/components/bookings/BookingCalendar";
 
 interface DashboardStats {
   totalUsers: number;
@@ -27,6 +29,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
     activeDepartments: 0
   });
   const [loading, setLoading] = useState(true);
+  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
 
   const loadDashboardData = async () => {
     try {
@@ -78,6 +81,23 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  if (showBookingCalendar) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowBookingCalendar(false)}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+        </div>
+        <BookingCalendar viewType="admin" userRole="admin" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -139,6 +159,17 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">Admin Dashboard</h1>
         <p className="text-sm text-muted-foreground lg:text-base">Overview of system statistics and activities</p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex gap-4">
+        <Button 
+          onClick={() => setShowBookingCalendar(true)}
+          className="gap-2"
+        >
+          <Calendar className="w-4 h-4" />
+          Manage All Bookings
+        </Button>
       </div>
 
       {/* Main Stats Grid */}
