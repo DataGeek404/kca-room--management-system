@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,13 +47,25 @@ export const LecturerBookingForm: React.FC<LecturerBookingFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.roomId || !formData.title || !formData.startTime || !formData.endTime) {
-      return;
-    }
+    console.log('Lecturer form data before submission:', formData);
+
+    // Prepare data for submission with proper types (no validation)
+    const submitData = {
+      roomId: parseInt(formData.roomId.toString()),
+      title: formData.title.trim(),
+      startTime: moment(formData.startTime).toISOString(),
+      endTime: moment(formData.endTime).toISOString(),
+      description: formData.description?.trim() || null,
+      recurring: formData.recurring || false
+    };
+
+    console.log('Lecturer form submitting data:', submitData);
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      await onSubmit(submitData);
+    } catch (error) {
+      console.error('Lecturer booking submission error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -69,7 +81,7 @@ export const LecturerBookingForm: React.FC<LecturerBookingFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="room">Room *</Label>
+        <Label htmlFor="room">Room</Label>
         <Select 
           value={formData.roomId.toString()} 
           onValueChange={(value) => handleInputChange('roomId', parseInt(value))}
@@ -88,36 +100,33 @@ export const LecturerBookingForm: React.FC<LecturerBookingFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="title">Class/Event Title *</Label>
+        <Label htmlFor="title">Class/Event Title</Label>
         <Input
           id="title"
           value={formData.title}
           onChange={(e) => handleInputChange('title', e.target.value)}
           placeholder="e.g., Computer Science 101 Lecture"
-          required
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="startTime">Start Time *</Label>
+          <Label htmlFor="startTime">Start Time</Label>
           <Input
             id="startTime"
             type="datetime-local"
             value={formData.startTime}
             onChange={(e) => handleInputChange('startTime', e.target.value)}
-            required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="endTime">End Time *</Label>
+          <Label htmlFor="endTime">End Time</Label>
           <Input
             id="endTime"
             type="datetime-local"
             value={formData.endTime}
             onChange={(e) => handleInputChange('endTime', e.target.value)}
-            required
           />
         </div>
       </div>

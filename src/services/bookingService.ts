@@ -1,4 +1,3 @@
-
 import { getAuthToken } from './authService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -44,44 +43,68 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getMyBookings = async (): Promise<ApiResponse<Booking[]>> => {
-  const response = await fetch(`${API_BASE_URL}/bookings/my-bookings`, {
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to fetch bookings');
+// Helper function to check if backend is running
+const checkBackendHealth = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`, {
+      method: 'GET',
+      timeout: 5000
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('Backend health check failed:', error);
+    return false;
   }
+};
 
-  return response.json();
+export const getMyBookings = async (): Promise<ApiResponse<Booking[]>> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/bookings/my-bookings`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch bookings');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Get bookings error:', error);
+    throw error;
+  }
 };
 
 export const getAllBookings = async (params?: {
   status?: string;
   room_id?: number;
 }): Promise<ApiResponse<Booking[]>> => {
-  const queryParams = new URLSearchParams();
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
-        queryParams.append(key, value.toString());
-      }
+  try {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+
+    const url = `${API_BASE_URL}/bookings${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch bookings');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Get all bookings error:', error);
+    throw error;
   }
-
-  const url = `${API_BASE_URL}/bookings${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  
-  const response = await fetch(url, {
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to fetch bookings');
-  }
-
-  return response.json();
 };
 
 export const createBooking = async (bookingData: CreateBookingData): Promise<ApiResponse<Booking>> => {
@@ -96,6 +119,12 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
   });
   
   try {
+    // Check if backend is running
+    const isBackendRunning = await checkBackendHealth();
+    if (!isBackendRunning) {
+      throw new Error('Backend server is not running. Please make sure the backend server is started.');
+    }
+
     const response = await fetch(`${API_BASE_URL}/bookings`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -112,7 +141,17 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
     }
 
     if (!response.ok) {
-      throw new Error(responseData.message || 'Failed to create booking');
+      // Provide more detailed error information
+      if (response.status === 500) {
+        throw new Error('Server error: Please check if the database is running and properly configured.');
+      } else if (response.status === 400) {
+        const errorMessage = responseData.errors 
+          ? `Validation failed: ${responseData.errors.map((e: any) => e.msg).join(', ')}`
+          : responseData.message || 'Bad request';
+        throw new Error(errorMessage);
+      } else {
+        throw new Error(responseData.message || `Request failed with status ${response.status}`);
+      }
     }
 
     return responseData;
