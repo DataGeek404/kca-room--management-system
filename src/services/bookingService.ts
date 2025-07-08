@@ -1,4 +1,3 @@
-
 import { getAuthToken } from './authService';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -94,6 +93,21 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Api
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || 'Failed to create booking');
+  }
+
+  return response.json();
+};
+
+export const updateBooking = async (id: number, bookingData: CreateBookingData): Promise<ApiResponse<Booking>> => {
+  const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(bookingData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to update booking');
   }
 
   return response.json();
