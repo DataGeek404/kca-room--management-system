@@ -1,4 +1,3 @@
-
 const express = require('express');
 const pool = require('../config/database');
 const { authenticateToken, authorize } = require('../middleware/auth');
@@ -173,6 +172,12 @@ const cleanupExpiredBookings = async () => {
   } catch (error) {
     console.error('Error cleaning up expired bookings:', error);
   }
+};
+
+// Helper function to convert ISO 8601 to MySQL datetime format
+const convertToMySQLDateTime = (isoString) => {
+  const date = new Date(isoString);
+  return date.toISOString().slice(0, 19).replace('T', ' ');
 };
 
 /**
@@ -519,15 +524,23 @@ router.post('/', authenticateToken, validateBooking, async (req, res) => {
   try {
     const { roomId, title, startTime, endTime, recurring, description } = req.body;
 
+    console.log('Create booking request:', { roomId, title, startTime, endTime, recurring, description });
+
     // Clean up expired bookings first
     await cleanupExpiredBookings();
+
+    // Convert ISO 8601 datetime to MySQL format
+    const mysqlStartTime = convertToMySQLDateTime(startTime);
+    const mysqlEndTime = convertToMySQLDateTime(endTime);
+
+    console.log('Converted datetimes:', { mysqlStartTime, mysqlEndTime });
 
     // Check room availability (exclude completed and cancelled bookings)
     const [conflicts] = await pool.execute(
       `SELECT id FROM bookings 
        WHERE room_id = ? AND status IN ('confirmed', 'pending') 
        AND NOT (end_time <= ? OR start_time >= ?)`,
-      [roomId, startTime, endTime]
+      [roomId, mysqlStartTime, mysqlEndTime]
     );
 
     if (conflicts.length > 0) {
@@ -540,7 +553,7 @@ router.post('/', authenticateToken, validateBooking, async (req, res) => {
     const [result] = await pool.execute(
       `INSERT INTO bookings (room_id, user_id, title, start_time, end_time, recurring, description, created_at) 
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [roomId, req.user.id, title, startTime, endTime, recurring || false, description || null]
+      [roomId, req.user.id, title, mysqlStartTime, mysqlEndTime, recurring || false, description || null]
     );
 
     const [newBooking] = await pool.execute(
@@ -626,14 +639,16 @@ router.post('/', authenticateToken, validateBooking, async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validateBooking, async (req, res) => {
   try {
     const { id } = req.params;
     const { roomId, title, startTime, endTime, recurring, description } = req.body;
 
+    console.log('Update booking request:', { id, roomId, title, startTime, endTime, recurring, description });
+
     // Check if user owns the booking or is admin
     const [existingBookings] = await pool.execute(
-      'SELECT user_id FROM bookings WHERE id = ?',
+      'SELECT user_id, status FROM bookings WHERE id = ?',
       [id]
     );
 
@@ -644,22 +659,39 @@ router.put('/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    if (existingBookings[0].user_id !== req.user.id && req.user.role !== 'admin') {
+    const existingBooking = existingBookings[0];
+
+    // Check permissions
+    if (existingBooking.user_id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions'
       });
     }
 
+    // Prevent updating completed or cancelled bookings
+    if (existingBooking.status === 'completed' || existingBooking.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot update completed or cancelled bookings'
+      });
+    }
+
     // Clean up expired bookings first
     await cleanupExpiredBookings();
+
+    // Convert ISO 8601 datetime to MySQL format
+    const mysqlStartTime = convertToMySQLDateTime(startTime);
+    const mysqlEndTime = convertToMySQLDateTime(endTime);
+
+    console.log('Converted update datetimes:', { mysqlStartTime, mysqlEndTime });
 
     // Check room availability (excluding current booking and completed/cancelled bookings)
     const [conflicts] = await pool.execute(
       `SELECT id FROM bookings 
        WHERE room_id = ? AND status IN ('confirmed', 'pending') AND id != ?
        AND NOT (end_time <= ? OR start_time >= ?)`,
-      [roomId, id, startTime, endTime]
+      [roomId, id, mysqlStartTime, mysqlEndTime]
     );
 
     if (conflicts.length > 0) {
@@ -672,8 +704,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const [result] = await pool.execute(
       `UPDATE bookings SET room_id = ?, title = ?, start_time = ?, end_time = ?, 
        recurring = ?, description = ?, updated_at = NOW() WHERE id = ?`,
-      [roomId, title, startTime, endTime, recurring || false, description || null, id]
+      [roomId, title, mysqlStartTime, mysqlEndTime, recurring || false, description || null, id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found or no changes made'
+      });
+    }
 
     const [updatedBooking] = await pool.execute(
       `SELECT b.*, r.name as room_name, r.building, r.floor, u.name as user_name 
@@ -744,7 +783,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     // Check if user owns the booking or is admin
     const [bookings] = await pool.execute(
-      'SELECT user_id FROM bookings WHERE id = ?',
+      'SELECT user_id, status FROM bookings WHERE id = ?',
       [id]
     );
 
@@ -755,17 +794,34 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    if (bookings[0].user_id !== req.user.id && req.user.role !== 'admin') {
+    const booking = bookings[0];
+
+    if (booking.user_id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions'
       });
     }
 
-    await pool.execute(
+    // Prevent cancelling already completed or cancelled bookings
+    if (booking.status === 'completed' || booking.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: `Booking is already ${booking.status}`
+      });
+    }
+
+    const [result] = await pool.execute(
       'UPDATE bookings SET status = "cancelled", updated_at = NOW() WHERE id = ?',
       [id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
 
     res.json({
       success: true,
@@ -838,10 +894,17 @@ router.delete('/admin/hard-delete/:id', authenticateToken, authorize('admin'), a
     }
 
     // Permanently delete the booking
-    await pool.execute(
+    const [result] = await pool.execute(
       'DELETE FROM bookings WHERE id = ?',
       [id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
 
     res.json({
       success: true,
