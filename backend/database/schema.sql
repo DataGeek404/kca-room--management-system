@@ -1,8 +1,7 @@
 
 -- KCA Room Management System Database Schema
-CREATE DATABASE kca_room_management;
+CREATE DATABASE IF NOT EXISTS kca_room_management;
 USE kca_room_management;
--- Drop existing tables if they exist
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
@@ -22,6 +21,12 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_role (role),
     INDEX idx_status (status)
 );
+
+-- Add missing columns if they don't exist (for existing installations)
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS phone VARCHAR(20) NULL,
+ADD COLUMN IF NOT EXISTS bio TEXT NULL,
+ADD COLUMN IF NOT EXISTS avatar VARCHAR(255) NULL;
 
 -- Rooms table
 CREATE TABLE IF NOT EXISTS rooms (

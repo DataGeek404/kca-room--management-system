@@ -20,9 +20,10 @@ interface User {
 
 interface DashboardProps {
   user: User;
+  onLogout?: () => Promise<void>;
 }
 
-export const Dashboard = ({ user }: DashboardProps) => {
+export const Dashboard = ({ user, onLogout }: DashboardProps) => {
   const [activeTab, setActiveTab] = useState("overview");
 
   const getRoleSpecificTabs = () => {
@@ -78,11 +79,11 @@ export const Dashboard = ({ user }: DashboardProps) => {
     switch (activeTab) {
       case "overview":
         if (user.role === 'admin') {
-          return <AdminDashboard />;
+          return <AdminDashboard activeView="overview" />;
         } else if (user.role === 'lecturer') {
-          return <LecturerDashboard />;
+          return <LecturerDashboard activeView="overview" />;
         } else if (user.role === 'maintenance') {
-          return <MaintenanceDashboard />;
+          return <MaintenanceDashboard activeView="overview" />;
         }
         return <div>Dashboard content for {user.role}</div>;
       
