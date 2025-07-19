@@ -4,8 +4,9 @@ import { RoomBrowser } from "@/components/rooms/RoomBrowser";
 import { BookingForm } from "@/components/bookings/BookingForm";
 import { MyBookings } from "@/components/bookings/MyBookings";
 import { getRooms } from "@/services/roomService";
-import { createBooking } from "@/services/bookingService";
+import { createBooking, getMyBookings } from "@/services/bookingService";
 import { Room } from "@/services/roomService";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface LecturerDashboardProps {
@@ -13,8 +14,17 @@ interface LecturerDashboardProps {
 }
 
 export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
+  const { user } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    weeklyBookingsCount: 0,
+    availableRoomsCount: 0,
+    nextBooking: null as any,
+    upcomingBookings: [] as any[],
+    availableRooms: [] as any[]
+  });
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -37,6 +47,73 @@ export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
     }
   }, [activeView]);
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!user || (activeView && activeView !== 'overview')) return;
+      
+      try {
+        setIsLoading(true);
+        
+        // Fetch user's bookings and rooms in parallel
+        const [bookingsResponse, roomsResponse] = await Promise.all([
+          getMyBookings(),
+          getRooms()
+        ]);
+
+        if (bookingsResponse.success && bookingsResponse.data) {
+          const userBookings = bookingsResponse.data;
+          setBookings(userBookings);
+
+          // Calculate weekly bookings count
+          const now = new Date();
+          const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          
+          const weeklyBookings = userBookings.filter((booking: any) => {
+            const bookingDate = new Date(booking.start_time);
+            return bookingDate >= weekStart && bookingDate <= weekEnd;
+          });
+
+          // Get upcoming bookings (next 3)
+          const upcomingBookings = userBookings
+            .filter((booking: any) => new Date(booking.start_time) >= new Date())
+            .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+            .slice(0, 3);
+
+          // Get next booking
+          const nextBooking = upcomingBookings[0] || null;
+
+          setDashboardData(prev => ({
+            ...prev,
+            weeklyBookingsCount: weeklyBookings.length,
+            nextBooking,
+            upcomingBookings
+          }));
+        }
+
+        if (roomsResponse.success && roomsResponse.data) {
+          const availableRooms = roomsResponse.data.filter((room: any) => 
+            room.status === 'available'
+          );
+          
+          setDashboardData(prev => ({
+            ...prev,
+            availableRoomsCount: availableRooms.length,
+            availableRooms: availableRooms.slice(0, 3) // Show top 3 for quick booking
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [activeView, user]);
+
   const handleBookingSubmit = async (data: any) => {
     try {
       const response = await createBooking(data);
@@ -48,6 +125,21 @@ export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
     } catch (error: any) {
       console.error('Error creating booking:', error);
       toast.error(error.message || 'Failed to create booking');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
     }
   };
 
@@ -82,7 +174,9 @@ export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
             <CardTitle className="text-lg">My Bookings</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">7</div>
+            <div className="text-3xl font-bold">
+              {isLoading ? '...' : dashboardData.weeklyBookingsCount}
+            </div>
             <p className="text-blue-100 text-sm">This week</p>
           </CardContent>
         </Card>
@@ -92,7 +186,9 @@ export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
             <CardTitle className="text-lg">Available Rooms</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">15</div>
+            <div className="text-3xl font-bold">
+              {isLoading ? '...' : dashboardData.availableRoomsCount}
+            </div>
             <p className="text-green-100 text-sm">Right now</p>
           </CardContent>
         </Card>
@@ -102,8 +198,29 @@ export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
             <CardTitle className="text-lg">Next Class</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">A101</div>
-            <p className="text-purple-100 text-sm">2:00 PM - 4:00 PM</p>
+            {isLoading ? (
+              <div className="text-xl font-bold">...</div>
+            ) : dashboardData.nextBooking ? (
+              <>
+                <div className="text-xl font-bold">Room {dashboardData.nextBooking.room_name}</div>
+                <p className="text-purple-100 text-sm">
+                  {new Date(dashboardData.nextBooking.start_time).toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit', 
+                    hour12: true 
+                  })} - {new Date(dashboardData.nextBooking.end_time).toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit', 
+                    hour12: true 
+                  })}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-xl font-bold">No classes</div>
+                <p className="text-purple-100 text-sm">scheduled</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -114,22 +231,34 @@ export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
             <CardTitle>Upcoming Bookings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { room: "A101", time: "2:00 PM - 4:00 PM", date: "Today", subject: "Computer Science 101" },
-              { room: "B205", time: "10:00 AM - 12:00 PM", date: "Tomorrow", subject: "Data Structures" },
-              { room: "C301", time: "9:00 AM - 11:00 AM", date: "Wednesday", subject: "Algorithms" },
-            ].map((booking, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">{booking.subject}</p>
-                  <p className="text-sm text-gray-600">Room {booking.room}</p>
+            {isLoading ? (
+              <div className="text-center text-gray-500">Loading...</div>
+            ) : dashboardData.upcomingBookings.length > 0 ? (
+              dashboardData.upcomingBookings.map((booking: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{booking.title || booking.purpose || 'Class'}</p>
+                    <p className="text-sm text-gray-600">Room {booking.room_name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">{formatDate(booking.start_time)}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(booking.start_time).toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit', 
+                        hour12: true 
+                      })} - {new Date(booking.end_time).toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit', 
+                        hour12: true 
+                      })}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{booking.date}</p>
-                  <p className="text-xs text-gray-500">{booking.time}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center text-gray-500">No upcoming bookings</div>
+            )}
           </CardContent>
         </Card>
 
@@ -139,24 +268,26 @@ export const LecturerDashboard = ({ activeView }: LecturerDashboardProps) => {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 gap-3">
-              {[
-                { room: "A101", capacity: "50 seats", features: "Projector, Whiteboard" },
-                { room: "B205", capacity: "30 seats", features: "Smart Board, Audio" },
-                { room: "C301", capacity: "80 seats", features: "Projector, Microphone" },
-              ].map((room, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 cursor-pointer transition-colors">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium text-gray-900">Room {room.room}</div>
-                      <div className="text-sm text-gray-600">{room.capacity}</div>
-                      <div className="text-xs text-gray-500">{room.features}</div>
-                    </div>
-                    <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      Available
+              {isLoading ? (
+                <div className="text-center text-gray-500">Loading...</div>
+              ) : dashboardData.availableRooms.length > 0 ? (
+                dashboardData.availableRooms.map((room: any, index: number) => (
+                  <div key={index} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 cursor-pointer transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-gray-900">{room.name}</div>
+                        <div className="text-sm text-gray-600">{room.capacity} seats</div>
+                        <div className="text-xs text-gray-500">{room.features || 'Standard equipment'}</div>
+                      </div>
+                      <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        Available
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-center text-gray-500">No available rooms</div>
+              )}
             </div>
           </CardContent>
         </Card>
