@@ -105,6 +105,10 @@ const router = express.Router();
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
+    // Test database connection first
+    await pool.execute('SELECT 1');
+    console.log('Database connection test successful for rooms');
+    
     const { building, floor, capacity, status, search } = req.query;
     
     let query = `
@@ -152,7 +156,22 @@ router.get('/', authenticateToken, async (req, res) => {
       data: parsedRooms
     });
   } catch (error) {
-    console.error('Get rooms error:', error);
+    console.error('Get rooms error details:', {
+      message: error.message,
+      code: error.code,
+      sqlState: error.sqlState,
+      errno: error.errno,
+      stack: error.stack
+    });
+    
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({ success: false, message: 'Database table not found. Please setup database.' });
+    } else if (error.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(500).json({ success: false, message: 'Database schema error. Missing required column.' });
+    } else if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+      return res.status(500).json({ success: false, message: 'Database connection failed.' });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to fetch rooms'
