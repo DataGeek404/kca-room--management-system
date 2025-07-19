@@ -151,7 +151,7 @@ const keepAlive = () => {
     } catch (error) {
       console.log('⚠️ Keep-alive ping failed:', error.message);
     }
-  }, 14 * 60 * 1000); // Ping every 14 minutes
+  }, 5 * 60 * 1000); // Ping every 14 minutes
 };
 
 // Graceful shutdown handling
