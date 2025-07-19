@@ -15,7 +15,7 @@ router.get('/', authenticateToken, async (req, res) => {
     console.log('Database connection test successful for maintenance');
     
     let query = `
-      SELECT m.*, r.name as room_name, COALESCE(r.building, 'N/A') as building, COALESCE(r.floor, 0) as floor, u.name as reported_by_name
+      SELECT m.*, r.name as room_name, r.location, u.name as reported_by_name
       FROM maintenance_requests m
       JOIN rooms r ON m.room_id = r.id
       JOIN users u ON m.reported_by = u.id
@@ -36,9 +36,16 @@ router.get('/', authenticateToken, async (req, res) => {
 
     const [requests] = await pool.execute(query, params);
 
+    // Add mock building/floor data from location
+    const processedRequests = requests.map(request => ({
+      ...request,
+      building: request.location ? request.location.split(',')[0] : 'Unknown',
+      floor: request.location ? (request.location.includes('Floor') ? parseInt(request.location.match(/\d+/)?.[0] || '1') : 1) : 1
+    }));
+
     res.json({
       success: true,
-      data: requests
+      data: processedRequests
     });
   } catch (error) {
     console.error('Get maintenance requests error:', error);
@@ -69,7 +76,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     const [newRequest] = await pool.execute(
-      `SELECT m.*, r.name as room_name, COALESCE(r.building, 'N/A') as building, COALESCE(r.floor, 0) as floor, u.name as reported_by_name
+      `SELECT m.*, r.name as room_name, r.location, u.name as reported_by_name
        FROM maintenance_requests m
        JOIN rooms r ON m.room_id = r.id
        JOIN users u ON m.reported_by = u.id
@@ -77,10 +84,17 @@ router.post('/', authenticateToken, async (req, res) => {
       [result.insertId]
     );
 
+    // Add mock building/floor data from location
+    const processedRequest = {
+      ...newRequest[0],
+      building: newRequest[0].location ? newRequest[0].location.split(',')[0] : 'Unknown',
+      floor: newRequest[0].location ? (newRequest[0].location.includes('Floor') ? parseInt(newRequest[0].location.match(/\d+/)?.[0] || '1') : 1) : 1
+    };
+
     res.status(201).json({
       success: true,
       message: 'Maintenance request created successfully',
-      data: newRequest[0]
+      data: processedRequest
     });
   } catch (error) {
     console.error('Create maintenance request error:', error);

@@ -121,12 +121,12 @@ router.get('/', authenticateToken, async (req, res) => {
     const params = [];
 
     if (building) {
-      query += ' AND r.building = ?';
-      params.push(building);
+      query += ' AND r.location LIKE ?';
+      params.push(`%${building}%`);
     }
     if (floor) {
-      query += ' AND r.floor = ?';
-      params.push(floor);
+      query += ' AND r.location LIKE ?';
+      params.push(`%Floor ${floor}%`);
     }
     if (capacity) {
       query += ' AND r.capacity >= ?';
@@ -137,18 +137,20 @@ router.get('/', authenticateToken, async (req, res) => {
       params.push(status);
     }
     if (search) {
-      query += ' AND (r.name LIKE ? OR r.description LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      query += ' AND (r.name LIKE ? OR r.location LIKE ? OR r.equipment LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    query += ' GROUP BY r.id ORDER BY r.building, r.floor, r.name';
+    query += ' GROUP BY r.id ORDER BY r.location, r.name';
 
     const [rooms] = await pool.execute(query, params);
 
-    // Parse resources JSON
+    // Parse resources JSON and add mock building/floor data
     const parsedRooms = rooms.map(room => ({
       ...room,
-      resources: room.resources ? JSON.parse(room.resources) : []
+      resources: room.equipment ? room.equipment.split(', ') : [],
+      building: room.location ? room.location.split(',')[0] : 'Unknown',
+      floor: room.location ? (room.location.includes('Floor') ? parseInt(room.location.match(/\d+/)?.[0] || '1') : 1) : 1
     }));
 
     res.json({

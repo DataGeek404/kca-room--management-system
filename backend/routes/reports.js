@@ -100,7 +100,7 @@ router.get('/room-utilization', authorizeWithFiltering('admin', 'lecturer', 'mai
     
     let query = `
       SELECT 
-        r.id, r.name, COALESCE(r.building, 'N/A') as building, COALESCE(r.floor, 0) as floor, r.capacity,
+        r.id, r.name, r.location, r.capacity,
         COUNT(b.id) as total_bookings,
         COALESCE(SUM(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as total_hours,
         COALESCE(AVG(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as avg_booking_duration
@@ -126,9 +126,16 @@ router.get('/room-utilization', authorizeWithFiltering('admin', 'lecturer', 'mai
 
     const [data] = await pool.execute(query, params);
 
+    // Add mock building/floor data from location
+    const processedData = data.map(room => ({
+      ...room,
+      building: room.location ? room.location.split(',')[0] : 'Unknown',
+      floor: room.location ? (room.location.includes('Floor') ? parseInt(room.location.match(/\d+/)?.[0] || '1') : 1) : 1
+    }));
+
     res.json({
       success: true,
-      data
+      data: processedData
     });
   } catch (error) {
     console.error('Room utilization report error:', error);

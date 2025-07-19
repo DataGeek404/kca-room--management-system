@@ -223,7 +223,7 @@ router.get('/my-bookings', authenticateToken, async (req, res) => {
     await cleanupExpiredBookings();
     
     const [bookings] = await pool.execute(
-      `SELECT b.*, r.name as room_name, r.building, r.floor 
+      `SELECT b.*, r.name as room_name, r.location 
        FROM bookings b 
        JOIN rooms r ON b.room_id = r.id 
        WHERE b.user_id = ? AND b.status != 'completed'
@@ -231,9 +231,16 @@ router.get('/my-bookings', authenticateToken, async (req, res) => {
       [req.user.id]
     );
 
+    // Add mock building/floor data from location
+    const processedBookings = bookings.map(booking => ({
+      ...booking,
+      building: booking.location ? booking.location.split(',')[0] : 'Unknown',
+      floor: booking.location ? (booking.location.includes('Floor') ? parseInt(booking.location.match(/\d+/)?.[0] || '1') : 1) : 1
+    }));
+
     res.json({
       success: true,
-      data: bookings
+      data: processedBookings
     });
   } catch (error) {
     console.error('Get bookings error:', error);
@@ -317,7 +324,7 @@ router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
     const { status, room_id, user_id, start_date, end_date } = req.query;
     
     let query = `
-      SELECT b.*, r.name as room_name, r.building, r.floor, u.name as user_name 
+      SELECT b.*, r.name as room_name, r.location, u.name as user_name 
       FROM bookings b 
       JOIN rooms r ON b.room_id = r.id 
       JOIN users u ON b.user_id = u.id 
@@ -350,9 +357,16 @@ router.get('/', authenticateToken, authorize('admin'), async (req, res) => {
 
     const [bookings] = await pool.execute(query, params);
 
+    // Add mock building/floor data from location
+    const processedBookings = bookings.map(booking => ({
+      ...booking,
+      building: booking.location ? booking.location.split(',')[0] : 'Unknown',
+      floor: booking.location ? (booking.location.includes('Floor') ? parseInt(booking.location.match(/\d+/)?.[0] || '1') : 1) : 1
+    }));
+
     res.json({
       success: true,
-      data: bookings
+      data: processedBookings
     });
   } catch (error) {
     console.error('Get all bookings error:', error);
@@ -407,7 +421,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     const [bookings] = await pool.execute(
-      `SELECT b.*, r.name as room_name, r.building, r.floor, u.name as user_name 
+      `SELECT b.*, r.name as room_name, r.location, u.name as user_name 
        FROM bookings b 
        JOIN rooms r ON b.room_id = r.id 
        JOIN users u ON b.user_id = u.id 
@@ -432,9 +446,16 @@ router.get('/:id', authenticateToken, async (req, res) => {
       });
     }
 
+    // Add mock building/floor data from location
+    const processedBooking = {
+      ...booking,
+      building: booking.location ? booking.location.split(',')[0] : 'Unknown',
+      floor: booking.location ? (booking.location.includes('Floor') ? parseInt(booking.location.match(/\d+/)?.[0] || '1') : 1) : 1
+    };
+
     res.json({
       success: true,
-      data: booking
+      data: processedBooking
     });
   } catch (error) {
     console.error('Get booking error:', error);
@@ -557,7 +578,7 @@ router.post('/', authenticateToken, validateBooking, async (req, res) => {
     );
 
     const [newBooking] = await pool.execute(
-      `SELECT b.*, r.name as room_name, r.building, r.floor, u.name as user_name 
+      `SELECT b.*, r.name as room_name, r.location, u.name as user_name 
        FROM bookings b 
        JOIN rooms r ON b.room_id = r.id 
        JOIN users u ON b.user_id = u.id 
@@ -565,10 +586,17 @@ router.post('/', authenticateToken, validateBooking, async (req, res) => {
       [result.insertId]
     );
 
+    // Add mock building/floor data from location
+    const processedBooking = {
+      ...newBooking[0],
+      building: newBooking[0].location ? newBooking[0].location.split(',')[0] : 'Unknown',
+      floor: newBooking[0].location ? (newBooking[0].location.includes('Floor') ? parseInt(newBooking[0].location.match(/\d+/)?.[0] || '1') : 1) : 1
+    };
+
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
-      data: newBooking[0]
+      data: processedBooking
     });
   } catch (error) {
     console.error('Create booking error:', error);
@@ -715,7 +743,7 @@ router.put('/:id', authenticateToken, validateBooking, async (req, res) => {
     }
 
     const [updatedBooking] = await pool.execute(
-      `SELECT b.*, r.name as room_name, r.building, r.floor, u.name as user_name 
+      `SELECT b.*, r.name as room_name, r.location, u.name as user_name 
        FROM bookings b 
        JOIN rooms r ON b.room_id = r.id 
        JOIN users u ON b.user_id = u.id 
@@ -723,10 +751,17 @@ router.put('/:id', authenticateToken, validateBooking, async (req, res) => {
       [id]
     );
 
+    // Add mock building/floor data from location
+    const processedBooking = {
+      ...updatedBooking[0],
+      building: updatedBooking[0].location ? updatedBooking[0].location.split(',')[0] : 'Unknown',
+      floor: updatedBooking[0].location ? (updatedBooking[0].location.includes('Floor') ? parseInt(updatedBooking[0].location.match(/\d+/)?.[0] || '1') : 1) : 1
+    };
+
     res.json({
       success: true,
       message: 'Booking updated successfully',
-      data: updatedBooking[0]
+      data: processedBooking
     });
   } catch (error) {
     console.error('Update booking error:', error);
