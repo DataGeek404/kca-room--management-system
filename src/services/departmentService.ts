@@ -1,7 +1,7 @@
 
 import { getAuthToken } from './authService';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://kca-campus.onrender.com/api';
 
 export interface Department {
   id: number;

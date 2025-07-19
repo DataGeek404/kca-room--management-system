@@ -39,7 +39,8 @@ app.use(limiter);
 // CORS configuration - Updated to properly handle all methods including DELETE
 const corsOptions = {
   origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
+    process.env.FRONTEND_URL || 'https://kca-campus.vercel.app',
+    'http://localhost:5173',
     'http://localhost:8080',
     'http://localhost:3000'
   ],
@@ -71,6 +72,10 @@ const swaggerOptions = {
       description: 'API for managing university rooms, bookings, and maintenance'
     },
     servers: [
+      {
+        url: 'https://kca-campus.onrender.com',
+        description: 'Production server'
+      },
       {
         url: `http://localhost:${PORT}`,
         description: 'Development server'
