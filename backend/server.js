@@ -139,11 +139,53 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
+// Keep-alive mechanism to prevent server shutdown
+const keepAlive = () => {
+  const serverUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  
+  setInterval(async () => {
+    try {
+      const fetch = (await import('node-fetch')).default;
+      await fetch(`${serverUrl}/health`);
+      console.log('🔄 Keep-alive ping successful');
+    } catch (error) {
+      console.log('⚠️ Keep-alive ping failed:', error.message);
+    }
+  }, 14 * 60 * 1000); // Ping every 14 minutes
+};
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  process.exit(0);
+});
+
+// Unhandled rejection handling
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
   console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
+  
+  // Start keep-alive mechanism
+  if (process.env.NODE_ENV === 'production') {
+    keepAlive();
+    console.log('🔄 Keep-alive mechanism activated');
+  }
 });
 
 module.exports = app;
