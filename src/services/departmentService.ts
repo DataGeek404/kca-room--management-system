@@ -41,6 +41,7 @@ export interface ApiResponse<T> {
 
 const getAuthHeaders = () => {
   const token = getAuthToken();
+  console.log('Auth token for department request:', token ? 'Token exists' : 'No token');
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
