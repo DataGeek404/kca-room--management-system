@@ -125,7 +125,7 @@ export const AdvancedSearch = ({ onSearch, onClear }: AdvancedSearchProps) => {
                     <SelectValue placeholder="Any building" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any building</SelectItem>
+                    <SelectItem value="all">Any building</SelectItem>
                     {buildings.map(building => (
                       <SelectItem key={building} value={building}>{building}</SelectItem>
                     ))}
@@ -150,7 +150,7 @@ export const AdvancedSearch = ({ onSearch, onClear }: AdvancedSearchProps) => {
                     <SelectValue placeholder="Any status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any status</SelectItem>
+                    <SelectItem value="all">Any status</SelectItem>
                     <SelectItem value="available">Available</SelectItem>
                     <SelectItem value="occupied">Occupied</SelectItem>
                     <SelectItem value="maintenance">Under Maintenance</SelectItem>

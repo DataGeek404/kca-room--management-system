@@ -174,7 +174,7 @@ export const RoomManagement = () => {
                 <SelectValue placeholder="Building" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Buildings</SelectItem>
+                <SelectItem value="all">All Buildings</SelectItem>
                 <SelectItem value="Main Building">Main Building</SelectItem>
                 <SelectItem value="Science Block">Science Block</SelectItem>
                 <SelectItem value="Library">Library</SelectItem>
@@ -186,7 +186,7 @@ export const RoomManagement = () => {
                 <SelectValue placeholder="Floor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Floors</SelectItem>
+                <SelectItem value="all">All Floors</SelectItem>
                 <SelectItem value="1">1st Floor</SelectItem>
                 <SelectItem value="2">2nd Floor</SelectItem>
                 <SelectItem value="3">3rd Floor</SelectItem>
@@ -198,7 +198,7 @@ export const RoomManagement = () => {
                 <SelectValue placeholder="Min Capacity" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Capacity</SelectItem>
+                <SelectItem value="all">Any Capacity</SelectItem>
                 <SelectItem value="10">10+</SelectItem>
                 <SelectItem value="20">20+</SelectItem>
                 <SelectItem value="50">50+</SelectItem>
@@ -210,7 +210,7 @@ export const RoomManagement = () => {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="available">Available</SelectItem>
                 <SelectItem value="occupied">Occupied</SelectItem>
                 <SelectItem value="maintenance">Maintenance</SelectItem>
