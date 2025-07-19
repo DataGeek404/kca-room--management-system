@@ -43,6 +43,10 @@ router.post(
     const { name, email, password, role } = req.body;
 
     try {
+      // Test database connection first
+      await pool.execute('SELECT 1');
+      console.log('Database connection test successful');
+      
       // Check if user exists
       let [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
 
@@ -86,8 +90,23 @@ router.post(
         }
       });
     } catch (err) {
-      console.error('Registration error:', err);
-      res.status(500).json({ success: false, message: 'Server error' });
+      console.error('Registration error details:', {
+        message: err.message,
+        code: err.code,
+        sqlState: err.sqlState,
+        errno: err.errno,
+        stack: err.stack
+      });
+      
+      if (err.code === 'ER_NO_SUCH_TABLE') {
+        return res.status(500).json({ success: false, message: 'Database table not found. Please setup database.' });
+      } else if (err.code === 'ER_BAD_FIELD_ERROR') {
+        return res.status(500).json({ success: false, message: 'Database schema error. Missing required column.' });
+      } else if (err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT') {
+        return res.status(500).json({ success: false, message: 'Database connection failed.' });
+      }
+      
+      res.status(500).json({ success: false, message: 'Server error during registration' });
     }
   }
 );
@@ -116,6 +135,10 @@ router.post(
 
     try {
       console.log('Login attempt for email:', email);
+
+      // Test database connection first
+      await pool.execute('SELECT 1');
+      console.log('Database connection test successful for login');
 
       // Check if user exists - select password_hash column
       let [users] = await pool.execute('SELECT id, name, email, password_hash, role FROM users WHERE email = ?', [email]);
@@ -171,8 +194,23 @@ router.post(
         }
       });
     } catch (err) {
-      console.error('Login error:', err);
-      res.status(500).json({ success: false, message: 'Server error' });
+      console.error('Login error details:', {
+        message: err.message,
+        code: err.code,
+        sqlState: err.sqlState,
+        errno: err.errno,
+        stack: err.stack
+      });
+      
+      if (err.code === 'ER_NO_SUCH_TABLE') {
+        return res.status(500).json({ success: false, message: 'Database table not found. Please setup database.' });
+      } else if (err.code === 'ER_BAD_FIELD_ERROR') {
+        return res.status(500).json({ success: false, message: 'Database schema error. Missing required column.' });
+      } else if (err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT') {
+        return res.status(500).json({ success: false, message: 'Database connection failed.' });
+      }
+      
+      res.status(500).json({ success: false, message: 'Server error during login' });
     }
   }
 );
