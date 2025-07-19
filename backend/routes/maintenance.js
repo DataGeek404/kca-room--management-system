@@ -18,7 +18,7 @@ router.get('/', authenticateToken, async (req, res) => {
       SELECT m.*, r.name as room_name, r.location, u.name as reported_by_name
       FROM maintenance_requests m
       JOIN rooms r ON m.room_id = r.id
-      JOIN users u ON m.reported_by = u.id
+      JOIN users u ON m.user_id = u.id
       WHERE 1=1
     `;
     const params = [];
@@ -62,7 +62,7 @@ router.post('/', authenticateToken, async (req, res) => {
     const { roomId, issue, priority, description } = req.body;
 
     const [result] = await pool.execute(
-      `INSERT INTO maintenance_requests (room_id, issue, priority, description, reported_by, created_at) 
+      `INSERT INTO maintenance_requests (room_id, issue, priority, description, user_id, created_at) 
        VALUES (?, ?, ?, ?, ?, NOW())`,
       [roomId, issue, priority || 'medium', description || null, req.user.id]
     );
@@ -79,7 +79,7 @@ router.post('/', authenticateToken, async (req, res) => {
       `SELECT m.*, r.name as room_name, r.location, u.name as reported_by_name
        FROM maintenance_requests m
        JOIN rooms r ON m.room_id = r.id
-       JOIN users u ON m.reported_by = u.id
+       JOIN users u ON m.user_id = u.id
        WHERE m.id = ?`,
       [result.insertId]
     );
