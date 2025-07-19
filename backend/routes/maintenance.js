@@ -114,10 +114,9 @@ router.put('/:id', authenticateToken, authorize('maintenance', 'admin'), async (
     const [result] = await pool.execute(
       `UPDATE maintenance_requests 
        SET status = ?, notes = ?, 
-           completed_at = CASE WHEN ? = 'completed' THEN NOW() ELSE completed_at END,
            updated_at = NOW()
        WHERE id = ?`,
-      [status, notes || null, status, id]
+      [status, notes || null, id]
     );
 
     if (result.affectedRows === 0) {
