@@ -351,7 +351,7 @@ router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
        status = COALESCE(?, status),
        updated_at = NOW()
        WHERE id = ?`,
-      [name, code, description || null, head_of_department || null, contact_email || null, contact_phone || null, building || null, floor || null, status, id]
+      [name || null, code || null, description || null, head_of_department || null, contact_email || null, contact_phone || null, building || null, floor || null, status || null, id]
     );
 
     // Get updated department
