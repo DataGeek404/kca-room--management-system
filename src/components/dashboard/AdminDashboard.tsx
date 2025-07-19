@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Calendar, Users, Wrench, TrendingUp, AlertTriangle, Activity, Database } from "lucide-react";
 import { getUsers } from "@/services/userService";
 import { getDepartments } from "@/services/departmentService";
+import { getMaintenanceRequests } from "@/services/maintenanceService";
 import { getRooms } from "@/services/roomService";
 import { getAllBookings } from "@/services/bookingService";
 import { Badge } from "@/components/ui/badge";
@@ -34,21 +35,20 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
     try {
       setLoading(true);
       
-      // Fetch users data
-      const usersResponse = await getUsers();
+      // Fetch all data in parallel
+      const [usersResponse, deptResponse, roomsResponse, bookingsResponse, maintenanceResponse] = await Promise.all([
+        getUsers(),
+        getDepartments(), 
+        getRooms(),
+        getAllBookings(),
+        getMaintenanceRequests({ status: 'pending' })
+      ]);
+      
       const users = usersResponse.success ? usersResponse.data || [] : [];
-      
-      // Fetch departments data
-      const deptResponse = await getDepartments();
       const departments = deptResponse.success ? deptResponse.data || [] : [];
-      
-      // Fetch rooms data
-      const roomsResponse = await getRooms();
       const rooms = roomsResponse.success ? roomsResponse.data || [] : [];
-      
-      // Fetch bookings data
-      const bookingsResponse = await getAllBookings();
       const bookings = bookingsResponse.success ? bookingsResponse.data || [] : [];
+      const maintenanceRequests = maintenanceResponse.success ? maintenanceResponse.data || [] : [];
       
       // Calculate active bookings (confirmed status and future dates)
       const now = new Date();
@@ -61,7 +61,7 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
         activeUsers: users.filter((u: any) => u.status === 'active').length,
         totalRooms: rooms.length,
         totalBookings: activeBookings.length,
-        pendingMaintenance: 8, // This would come from maintenance API when available
+        pendingMaintenance: maintenanceRequests.length,
         activeDepartments: departments.filter((d: any) => d.status === 'active').length
       });
     } catch (error) {
@@ -70,7 +70,8 @@ export const AdminDashboard = ({ activeView }: { activeView: string }) => {
       setStats(prevStats => ({
         ...prevStats,
         totalRooms: 0,
-        totalBookings: 0
+        totalBookings: 0,
+        pendingMaintenance: 0
       }));
     } finally {
       setLoading(false);
