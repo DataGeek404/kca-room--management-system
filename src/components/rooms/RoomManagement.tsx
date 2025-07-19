@@ -1,200 +1,376 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
-import { Room, getRooms, createRoom, updateRoom, deleteRoom, CreateRoomData } from "@/services/roomService";
-import { RoomCard } from "./RoomCard";
-import { RoomForm } from "./RoomForm";
-import { RoomFilters } from "./RoomFilters";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { toast } from 'sonner';
+import { getRooms, createRoom, updateRoom, deleteRoom } from '@/services/roomService';
+import { RoomForm } from './RoomForm';
+import type { Room, CreateRoomData } from '@/services/roomService';
 
 export const RoomManagement = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [buildingFilter, setBuildingFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    building: '',
+    floor: '',
+    capacity: '',
+    status: ''
+  });
+  
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadRooms();
+  }, [searchTerm, filters]);
 
   const loadRooms = async () => {
     try {
       setLoading(true);
-      const params = {
+      const response = await getRooms({
         search: searchTerm || undefined,
-        building: buildingFilter === "all" ? undefined : buildingFilter,
-        status: statusFilter === "all" ? undefined : statusFilter
-      };
-      const response = await getRooms(params);
+        building: filters.building || undefined,
+        floor: filters.floor ? parseInt(filters.floor) : undefined,
+        capacity: filters.capacity ? parseInt(filters.capacity) : undefined,
+        status: filters.status || undefined
+      });
+      
       if (response.success && response.data) {
         setRooms(response.data);
+      } else {
+        toast.error(response.message || 'Failed to load rooms');
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load rooms",
-        variant: "destructive"
-      });
+      console.error('Error loading rooms:', error);
+      toast.error('Failed to load rooms');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadRooms();
-  }, [searchTerm, buildingFilter, statusFilter]);
-
   const handleSubmit = async (formData: CreateRoomData) => {
     try {
-      setIsSubmitting(true);
+      setSubmitting(true);
+      let response;
+      
       if (editingRoom) {
-        await updateRoom(editingRoom.id, formData);
-        toast({
-          title: "Success",
-          description: "Room updated successfully"
-        });
-        setIsEditDialogOpen(false);
+        response = await updateRoom(editingRoom.id, formData);
       } else {
-        await createRoom(formData);
-        toast({
-          title: "Success",
-          description: "Room created successfully"
-        });
-        setIsAddDialogOpen(false);
+        response = await createRoom(formData);
       }
       
-      setEditingRoom(null);
-      loadRooms();
+      if (response.success) {
+        toast.success(editingRoom ? 'Room updated successfully' : 'Room created successfully');
+        setShowAddDialog(false);
+        setShowEditDialog(false);
+        setEditingRoom(null);
+        loadRooms();
+      } else {
+        toast.error(response.message || 'Operation failed');
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Operation failed",
-        variant: "destructive"
-      });
+      console.error('Error submitting room:', error);
+      toast.error('Operation failed');
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (room: Room) => {
-    if (!confirm(`Are you sure you want to delete room ${room.name}?`)) return;
-    
     try {
-      await deleteRoom(room.id);
-      toast({
-        title: "Success",
-        description: "Room deleted successfully"
-      });
-      loadRooms();
+      const response = await deleteRoom(room.id);
+      if (response.success) {
+        toast.success('Room deleted successfully');
+        loadRooms();
+      } else {
+        toast.error(response.message || 'Failed to delete room');
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete room",
-        variant: "destructive"
-      });
+      console.error('Error deleting room:', error);
+      toast.error('Failed to delete room');
     }
   };
 
   const handleStatusChange = async (room: Room, newStatus: string) => {
     try {
-      await updateRoom(room.id, { status: newStatus });
-      toast({
-        title: "Success",
-        description: "Room status updated successfully"
-      });
-      loadRooms();
+      const response = await updateRoom(room.id, { status: newStatus });
+      if (response.success) {
+        toast.success('Room status updated');
+        loadRooms();
+      } else {
+        toast.error(response.message || 'Failed to update status');
+      }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update status",
-        variant: "destructive"
-      });
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
     }
   };
 
   const openEditDialog = (room: Room) => {
     setEditingRoom(room);
-    setIsEditDialogOpen(true);
+    setShowEditDialog(true);
   };
 
   const handleCancel = () => {
+    setShowAddDialog(false);
+    setShowEditDialog(false);
     setEditingRoom(null);
-    setIsAddDialogOpen(false);
-    setIsEditDialogOpen(false);
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'available': return 'default';
+      case 'occupied': return 'secondary';
+      case 'maintenance': return 'destructive';
+      case 'inactive': return 'outline';
+      default: return 'default';
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Room Management</h1>
-          <p className="text-gray-600">Manage university classroom facilities</p>
+          <h1 className="text-3xl font-bold">Room Management</h1>
+          <p className="text-muted-foreground">Manage rooms, their status, and resources</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add New Room
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Room</DialogTitle>
-            </DialogHeader>
-            <RoomForm
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              isLoading={isSubmitting}
-            />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setShowAddDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Room
+        </Button>
       </div>
 
-      <RoomFilters
-        searchTerm={searchTerm}
-        buildingFilter={buildingFilter}
-        statusFilter={statusFilter}
-        onSearchChange={setSearchTerm}
-        onBuildingChange={setBuildingFilter}
-        onStatusChange={setStatusFilter}
-      />
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search rooms..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={filters.building} onValueChange={(value) => setFilters(prev => ({ ...prev, building: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Building" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Buildings</SelectItem>
+                <SelectItem value="Main Building">Main Building</SelectItem>
+                <SelectItem value="Science Block">Science Block</SelectItem>
+                <SelectItem value="Library">Library</SelectItem>
+                <SelectItem value="Student Center">Student Center</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filters.floor} onValueChange={(value) => setFilters(prev => ({ ...prev, floor: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Floor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Floors</SelectItem>
+                <SelectItem value="1">1st Floor</SelectItem>
+                <SelectItem value="2">2nd Floor</SelectItem>
+                <SelectItem value="3">3rd Floor</SelectItem>
+                <SelectItem value="4">4th Floor</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filters.capacity} onValueChange={(value) => setFilters(prev => ({ ...prev, capacity: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Min Capacity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Any Capacity</SelectItem>
+                <SelectItem value="10">10+</SelectItem>
+                <SelectItem value="20">20+</SelectItem>
+                <SelectItem value="50">50+</SelectItem>
+                <SelectItem value="100">100+</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="occupied">Occupied</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      {/* Loading */}
+      {loading && (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : (
+      )}
+
+      {/* Rooms Grid */}
+      {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {rooms.map((room) => (
-            <RoomCard
-              key={room.id}
-              room={room}
-              onEdit={openEditDialog}
-              onDelete={handleDelete}
-              onStatusChange={handleStatusChange}
-            />
+            <Card key={room.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{room.name}</CardTitle>
+                    <CardDescription>
+                      {room.building && room.floor ? `${room.building}, Floor ${room.floor}` : room.location}
+                    </CardDescription>
+                  </div>
+                  <Badge variant={getStatusBadgeVariant(room.status)}>
+                    {room.status}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Capacity:</span>
+                    <span className="font-medium">{room.capacity} people</span>
+                  </div>
+                  {room.type && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Type:</span>
+                      <span className="font-medium capitalize">{room.type}</span>
+                    </div>
+                  )}
+                  {room.resources && room.resources.length > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">Resources:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {room.resources.slice(0, 3).map((resource, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {resource}
+                          </Badge>
+                        ))}
+                        {room.resources.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{room.resources.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {room.description && (
+                    <p className="text-muted-foreground text-xs mt-2 line-clamp-2">
+                      {room.description}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Select value={room.status} onValueChange={(value) => handleStatusChange(room, value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="available">Available</SelectItem>
+                    <SelectItem value="occupied">Occupied</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditDialog(room)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Room</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{room.name}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(room)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
+      {/* No rooms found */}
+      {!loading && rooms.length === 0 && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">No rooms found matching your criteria.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Add Room Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Room</DialogTitle>
+            <DialogDescription>
+              Create a new room with its details and resources.
+            </DialogDescription>
+          </DialogHeader>
+          <RoomForm
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            submitting={submitting}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Room Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Room</DialogTitle>
+            <DialogDescription>
+              Update room details and resources.
+            </DialogDescription>
           </DialogHeader>
-          {editingRoom && (
-            <RoomForm
-              initialData={editingRoom}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              isLoading={isSubmitting}
-            />
-          )}
+          <RoomForm
+            room={editingRoom}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            submitting={submitting}
+          />
         </DialogContent>
       </Dialog>
     </div>

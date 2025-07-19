@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS departments (
 CREATE TABLE IF NOT EXISTS rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  type ENUM('lecture', 'lab', 'meeting', 'auditorium', 'other') NOT NULL,
+  type ENUM('lecture', 'lab', 'meeting', 'auditorium', 'other') NOT NULL DEFAULT 'lecture',
   capacity INT NOT NULL,
   building VARCHAR(100),
   floor INT,

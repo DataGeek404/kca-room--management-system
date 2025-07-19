@@ -7,20 +7,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { CreateRoomData, Room } from "@/services/roomService";
 
 interface RoomFormProps {
+  room?: Room;
   initialData?: Room;
   onSubmit: (data: CreateRoomData) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  submitting?: boolean;
 }
 
-export const RoomForm = ({ initialData, onSubmit, onCancel, isLoading }: RoomFormProps) => {
+export const RoomForm = ({ room, initialData, onSubmit, onCancel, isLoading, submitting }: RoomFormProps) => {
+  const roomData = room || initialData;
   const [formData, setFormData] = useState<CreateRoomData>({
-    name: initialData?.name || "",
-    capacity: initialData?.capacity || 0,
-    building: initialData?.building || "",
-    floor: initialData?.floor || 1,
-    resources: initialData?.resources || [],
-    description: initialData?.description || ""
+    name: roomData?.name || "",
+    type: roomData?.type || "lecture",
+    capacity: roomData?.capacity || 0,
+    building: roomData?.building || "",
+    floor: roomData?.floor || 1,
+    location: roomData?.location || "",
+    department_id: roomData?.department_id || undefined,
+    resources: roomData?.resources || [],
+    description: roomData?.description || "",
+    equipment: roomData?.equipment || "",
+    status: roomData?.status || "available"
   });
 
   const resourceOptions = [
@@ -126,8 +134,8 @@ export const RoomForm = ({ initialData, onSubmit, onCancel, isLoading }: RoomFor
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" className="flex-1" disabled={isLoading}>
-          {initialData ? 'Update' : 'Create'} Room
+        <Button type="submit" className="flex-1" disabled={isLoading || submitting}>
+          {roomData ? 'Update' : 'Create'} Room
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel

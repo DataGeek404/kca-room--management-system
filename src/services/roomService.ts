@@ -6,23 +6,32 @@ const API_BASE_URL = 'https://kca-campus.onrender.com/api';
 export interface Room {
   id: number;
   name: string;
+  type?: string;
   capacity: number;
-  building: string;
-  floor: number;
+  building?: string;
+  floor?: number;
+  location?: string;
+  department_id?: number;
   resources: string[];
   description?: string;
-  status: 'available' | 'maintenance' | 'occupied';
+  equipment?: string;
+  status: 'available' | 'maintenance' | 'occupied' | 'inactive';
   created_at?: string;
   updated_at?: string;
 }
 
 export interface CreateRoomData {
   name: string;
+  type?: string;
   capacity: number;
-  building: string;
-  floor: number;
+  building?: string;
+  floor?: number;
+  location?: string;
+  department_id?: number;
   resources: string[];
   description?: string;
+  equipment?: string;
+  status?: string;
 }
 
 export interface ApiResponse<T> {

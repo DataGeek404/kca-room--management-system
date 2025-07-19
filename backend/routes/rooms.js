@@ -232,12 +232,23 @@ router.get('/', authenticateToken, async (req, res) => {
  */
 router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req, res) => {
   try {
-    const { name, capacity, building, floor, resources, description } = req.body;
+    const { name, type, capacity, building, floor, location, department_id, resources, description, equipment } = req.body;
 
     const [result] = await pool.execute(
-      `INSERT INTO rooms (name, capacity, building, floor, resources, description, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-      [name, capacity, building, floor, JSON.stringify(resources || []), description || null]
+      `INSERT INTO rooms (name, type, capacity, building, floor, location, department_id, resources, description, equipment, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        name, 
+        type || 'lecture', 
+        capacity, 
+        building || null, 
+        floor || null, 
+        location || null, 
+        department_id || null, 
+        JSON.stringify(resources || []), 
+        description || null, 
+        equipment || null
+      ]
     );
 
     const [newRoom] = await pool.execute(
@@ -311,13 +322,26 @@ router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req
 router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, capacity, building, floor, resources, description, status } = req.body;
+    const { name, type, capacity, building, floor, location, department_id, resources, description, equipment, status } = req.body;
 
     const [result] = await pool.execute(
-      `UPDATE rooms SET name = ?, capacity = ?, building = ?, floor = ?, 
-       resources = ?, description = ?, status = ?, updated_at = NOW() 
+      `UPDATE rooms SET name = ?, type = ?, capacity = ?, building = ?, floor = ?, 
+       location = ?, department_id = ?, resources = ?, description = ?, equipment = ?, status = ?, updated_at = NOW() 
        WHERE id = ?`,
-      [name, capacity, building, floor, JSON.stringify(resources || []), description, status || 'available', id]
+      [
+        name || null, 
+        type || 'lecture', 
+        capacity || null, 
+        building || null, 
+        floor || null, 
+        location || null, 
+        department_id || null, 
+        JSON.stringify(resources || []), 
+        description || null, 
+        equipment || null, 
+        status || 'available', 
+        id
+      ]
     );
 
     if (result.affectedRows === 0) {
