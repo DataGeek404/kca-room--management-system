@@ -572,9 +572,9 @@ router.post('/', authenticateToken, validateBooking, async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO bookings (room_id, user_id, title, start_time, end_time, recurring, description, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [roomId, req.user.id, title, mysqlStartTime, mysqlEndTime, recurring || false, description || null]
+      `INSERT INTO bookings (room_id, user_id, purpose, start_time, end_time, created_at) 
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+      [roomId, req.user.id, title || purpose || 'Room booking', mysqlStartTime, mysqlEndTime]
     );
 
     const [newBooking] = await pool.execute(
