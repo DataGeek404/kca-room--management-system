@@ -41,8 +41,12 @@ CREATE TABLE IF NOT EXISTS rooms (
   name VARCHAR(255) NOT NULL,
   type ENUM('lecture', 'lab', 'meeting', 'auditorium', 'other') NOT NULL,
   capacity INT NOT NULL,
+  building VARCHAR(100),
+  floor INT,
   location VARCHAR(255),
   department_id INT,
+  resources TEXT,
+  description TEXT,
   equipment TEXT,
   status ENUM('available', 'occupied', 'maintenance', 'inactive') NOT NULL DEFAULT 'available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -70,15 +74,18 @@ CREATE TABLE IF NOT EXISTS maintenance_requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
   room_id INT NOT NULL,
   user_id INT NOT NULL,
+  reported_by INT NOT NULL,
   issue VARCHAR(255) NOT NULL,
   description TEXT,
   priority ENUM('low', 'medium', 'high') NOT NULL DEFAULT 'medium',
   status ENUM('pending', 'in-progress', 'completed') NOT NULL DEFAULT 'pending',
   notes TEXT,
+  completed_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (reported_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Insert default admin user (password: admin123)
@@ -92,7 +99,7 @@ INSERT IGNORE INTO departments (name, code, description, head_of_department, con
 ('Business', 'BUS', 'School of Business and Economics', 'Dr. Michael Johnson', 'business@kcauniversity.ac.ke', 'Business Block', 3);
 
 -- Insert sample rooms
-INSERT IGNORE INTO rooms (name, type, capacity, location, department_id, equipment, status) VALUES 
-('CS Lab 1', 'lab', 30, 'ICT Block, Room 201', 1, 'Computers, Projector, Whiteboard', 'available'),
-('Lecture Hall A', 'lecture', 100, 'Main Block, Ground Floor', 1, 'Projector, Sound System, Whiteboard', 'available'),
-('Engineering Workshop', 'lab', 25, 'Engineering Block, Room 101', 2, 'Workshop Tools, Safety Equipment', 'available');
+INSERT IGNORE INTO rooms (name, type, capacity, building, floor, location, department_id, resources, equipment, status) VALUES 
+('CS Lab 1', 'lab', 30, 'ICT Block', 2, 'ICT Block, Room 201', 1, '["Computers", "Projector", "Whiteboard"]', 'Computers, Projector, Whiteboard', 'available'),
+('Lecture Hall A', 'lecture', 100, 'Main Block', 1, 'Main Block, Ground Floor', 1, '["Projector", "Sound System", "Whiteboard"]', 'Projector, Sound System, Whiteboard', 'available'),
+('Engineering Workshop', 'lab', 25, 'Engineering Block', 1, 'Engineering Block, Room 101', 2, '["Workshop Tools", "Safety Equipment"]', 'Workshop Tools, Safety Equipment', 'available');

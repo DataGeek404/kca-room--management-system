@@ -94,9 +94,13 @@ router.get('/room-utilization', authorizeWithFiltering('admin', 'lecturer', 'mai
     const { startDate, endDate } = req.query;
     const { role, userId } = req.userContext;
 
+    // Test database connection first
+    await pool.execute('SELECT 1');
+    console.log('Database connection test successful for reports');
+    
     let query = `
       SELECT 
-        r.id, r.name, r.building, r.floor, r.capacity,
+        r.id, r.name, COALESCE(r.building, 'N/A') as building, COALESCE(r.floor, 0) as floor, r.capacity,
         COUNT(b.id) as total_bookings,
         COALESCE(SUM(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as total_hours,
         COALESCE(AVG(TIMESTAMPDIFF(HOUR, b.start_time, b.end_time)), 0) as avg_booking_duration

@@ -10,8 +10,12 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const { status, priority } = req.query;
     
+    // Test database connection first
+    await pool.execute('SELECT 1');
+    console.log('Database connection test successful for maintenance');
+    
     let query = `
-      SELECT m.*, r.name as room_name, r.building, r.floor, u.name as reported_by_name
+      SELECT m.*, r.name as room_name, COALESCE(r.building, 'N/A') as building, COALESCE(r.floor, 0) as floor, u.name as reported_by_name
       FROM maintenance_requests m
       JOIN rooms r ON m.room_id = r.id
       JOIN users u ON m.reported_by = u.id
@@ -65,7 +69,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     const [newRequest] = await pool.execute(
-      `SELECT m.*, r.name as room_name, r.building, r.floor, u.name as reported_by_name
+      `SELECT m.*, r.name as room_name, COALESCE(r.building, 'N/A') as building, COALESCE(r.floor, 0) as floor, u.name as reported_by_name
        FROM maintenance_requests m
        JOIN rooms r ON m.room_id = r.id
        JOIN users u ON m.reported_by = u.id
