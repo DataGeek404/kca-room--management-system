@@ -232,11 +232,11 @@ router.get('/', authenticateToken, async (req, res) => {
  */
 router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req, res) => {
   try {
-    const { name, type, capacity, building, floor, location, department_id, resources, description, equipment } = req.body;
+    const { name, type, capacity, building, floor, location, department_id, resources, equipment } = req.body;
 
     const [result] = await pool.execute(
-      `INSERT INTO rooms (name, type, capacity, building, floor, location, department_id, resources, description, equipment, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      `INSERT INTO rooms (name, type, capacity, building, floor, location, department_id, resources, equipment, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         name, 
         type || 'lecture', 
@@ -246,7 +246,6 @@ router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req
         location || null, 
         department_id || null, 
         JSON.stringify(resources || []), 
-        description || null, 
         equipment || null
       ]
     );
@@ -322,11 +321,11 @@ router.post('/', authenticateToken, authorize('admin'), validateRoom, async (req
 router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type, capacity, building, floor, location, department_id, resources, description, equipment, status } = req.body;
+    const { name, type, capacity, building, floor, location, department_id, resources, equipment, status } = req.body;
 
     const [result] = await pool.execute(
       `UPDATE rooms SET name = ?, type = ?, capacity = ?, building = ?, floor = ?, 
-       location = ?, department_id = ?, resources = ?, description = ?, equipment = ?, status = ?, updated_at = NOW() 
+       location = ?, department_id = ?, resources = ?, equipment = ?, status = ?, updated_at = NOW() 
        WHERE id = ?`,
       [
         name || null, 
@@ -336,8 +335,7 @@ router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
         floor || null, 
         location || null, 
         department_id || null, 
-        JSON.stringify(resources || []), 
-        description || null, 
+        JSON.stringify(resources || []),
         equipment || null, 
         status || 'available', 
         id
