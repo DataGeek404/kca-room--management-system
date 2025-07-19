@@ -185,7 +185,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
  *       400:
  *         description: Validation error
  */
-router.post('/', authorize('admin'), async (req, res) => {
+router.post('/', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const { 
       name, 
@@ -294,7 +294,7 @@ router.post('/', authorize('admin'), async (req, res) => {
  *       404:
  *         description: Department not found
  */
-router.put('/:id', authorize('admin'), async (req, res) => {
+router.put('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { 
@@ -397,7 +397,7 @@ router.put('/:id', authorize('admin'), async (req, res) => {
  *       404:
  *         description: Department not found
  */
-router.delete('/:id', authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticateToken, authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
 
